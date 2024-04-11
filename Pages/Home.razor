@@ -1,0 +1,35 @@
+﻿@page "/"
+@using System.Timers
+
+<PageTitle>Home</PageTitle>
+
+<FluentGrid Spacing="3" Justify="JustifyContent.Center" Style="padding-top:10px; height:auto">
+    <FluentGridItem xs="12">
+        <FluentCard Style="text-align:center;">
+            <FluentLabel Typo="Typography.HeroTitle">Justin Ridings</FluentLabel>
+            <FluentStack Orientation="Orientation.Horizontal">
+                <FluentSpacer />
+                <div style="padding-right:10px">
+                    <a href="@githubProfile">
+                        <img role="button" src="@githubProfilePic" class="face-large" href="@githubProfile" title="@githubProfile" />
+                    </a>
+                </div>
+                <FluentSpacer />
+            </FluentStack>
+            <FluentLabel>More to come!</FluentLabel>
+        </FluentCard>
+    </FluentGridItem>
+</FluentGrid>
+
+@code
+{
+    Timer submitTimer = new System.Timers.Timer(5000);
+    readonly string githubProfile = @"http://github.com/JustinRidings";
+    readonly string githubProfilePic = @"https://avatars.githubusercontent.com/u/49916830";
+
+    public async void OnTimeLapse(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        await base.InvokeAsync(StateHasChanged);
+    }
+
+}
