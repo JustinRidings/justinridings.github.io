@@ -4,28 +4,13 @@ using Microsoft.FluentUI.AspNetCore.Components;
 using Microsoft.FluentUI.AspNetCore.Components.DesignTokens;
 using PersonalSite;
 
-public class Program
-{
+var builder = WebAssemblyHostBuilder.CreateDefault(args);
+builder.RootComponents.Add<App>("#app");
+builder.RootComponents.Add<HeadOutlet>("head::after");
 
-    public static async Task Main(string[] args)
-    {
-        var builder = WebAssemblyHostBuilder.CreateDefault(args);
-        builder.RootComponents.Add<App>("#app");
-        builder.RootComponents.Add<HeadOutlet>("head::after");
-        ConfigureServices(builder.Services, builder.HostEnvironment.BaseAddress);
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+builder.Services.AddFluentUIComponents();
+builder.Services.AddDesignTokens();
+builder.Services.AddDataGridEntityFrameworkAdapter();
 
-        await builder.Build().RunAsync();
-    }
-
-    static void ConfigureServices(IServiceCollection services, string baseAddress)
-    {
-        services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(baseAddress) });
-        services.AddFluentUIComponents();
-        services.AddDesignTokens();
-        services.AddDataGridEntityFrameworkAdapter();
-    }
-}
-
-
-
-
+await builder.Build().RunAsync();

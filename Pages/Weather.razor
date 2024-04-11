@@ -5,49 +5,26 @@
 
 <h1>Weather</h1>
 
-<p>This component demonstrates fetching data from the server.</p>
-
-@if (forecasts == null)
+@* @if (forecasts == null)
 {
     <p><em>Loading...</em></p>
-}
+} *@
 else
 {
     <FluentLabel>There's nothing here...yet...</FluentLabel>
-@*     <FluentDataGrid Id="weathergrid" Items=@forecasts.AsQueryable() GridTemplateColumns="1fr 1fr 1fr 2fr" TGridItem=WeatherForecast>
-        <PropertyColumn Title="Date" Property="@(c => c!.Date)" Sortable="true" Align="Align.Start" />
-        <PropertyColumn Title="Temp. (C)" Property="@(c => c!.TemperatureC)" Sortable="true" Align="Align.Center" />
-        <PropertyColumn Title="Temp. (F)" Property="@(c => c!.TemperatureF)" Sortable="true" Align="Align.Center" />
-        <PropertyColumn Title="Summary" Property="@(c => c!.Summary)" Sortable="true" Align="Align.End" />
-    </FluentDataGrid> *@
 }
 
 @code {
-    private WeatherForecast[]? forecasts;
+    //private WeatherForecast[]? forecasts;
 
-    protected override async Task OnInitializedAsync()
-    {
-        //forecasts = await FetchWeatherAsync();
-    }
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     //forecasts = await FetchWeatherAsync();
+    // }
 
     // private async Task<WeatherForecast[]> FetchWeatherAsync()
     // {
     //     // Replace 'YourAPIKey' with your actual API key and 'YourCityID' with your city ID
-
-    //     if (response.IsSuccessStatusCode)
-    //     {
-    //         var weatherData = await response.Content.ReadFromJsonAsync<OpenWeatherResponse>();
-    //         // Map the API response to your WeatherForecast model
-    //         return new[] { new WeatherForecast
-    //         {
-    //             Date = DateOnly.FromDateTime(DateTime.Now)
-    //         }};
-    //     }
-    //     else
-    //     {
-    //         // Handle the error appropriately
-    //         return Array.Empty<WeatherForecast>();
-    //     }
     // }
 
     public class WeatherForecast
@@ -61,7 +38,7 @@ else
     // Define a model that matches the structure of the OpenWeather API response
     public class OpenWeatherResponse
     {
-        public string[] Main { get; set; }
-        public string[] Weather { get; set; }
+        public string[] Main { get; set; } = default!;
+        public string[] Weather { get; set; } = default!;
     }
 }
