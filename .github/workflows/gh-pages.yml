@@ -8,7 +8,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout 🛎️
+      uses: actions/checkout@v4
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
@@ -18,11 +19,9 @@ jobs:
       run: dotnet workload install wasm-tools
     - name: Publish with dotnet
       run: dotnet publish PersonalSite.csproj --configuration Release --output build --nologo
-    - name: Deploy to Github Pages
-      uses: JamesIves/github-pages-deploy-action@releases/v3
+    - name: Deploy 🚀
+      uses: JamesIves/github-pages-deploy-action@v4
       with:
-        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-        BASE_BRANCH: main # The branch the action should deploy from.
-        BRANCH: main # The branch the action should deploy to.
-        FOLDER: build/wwwroot # The folder the action should deploy.
-        SINGLE_COMMIT: true
+        folder: build/wwwroot # The folder the action should deploy
+        token: ${{ secrets.ACCESS_TOKEN }}
+      
