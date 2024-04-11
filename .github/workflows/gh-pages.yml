@@ -13,8 +13,11 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 8.0.204
+    # Install dotnet wasm buildtools workload
+    - name: Install .NET WASM Build Tools
+      run: dotnet workload install wasm-tools
     - name: Publish with dotnet
-      run: dotnet publish PersonalSite.csproj --configuration Release --output build
+      run: dotnet publish PersonalSite.csproj --configuration Release --output build --nologo
     - name: Deploy to Github Pages
       uses: JamesIves/github-pages-deploy-action@releases/v3
       with:
