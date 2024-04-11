@@ -1,27 +1,40 @@
-name: gh-pages
 
-on: [push]
+name: build and test and deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build:
-
+  deploy-to-github-pages:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout 🛎️
-      uses: actions/checkout@v4
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 8.0.204
-    # Install dotnet wasm buildtools workload
-    - name: Install .NET WASM Build Tools
-      run: dotnet workload install wasm-tools
-    - name: Publish with dotnet
-      run: dotnet publish PersonalSite.csproj --configuration Release --output build --nologo
-    - name: Deploy 🚀
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        folder: build/wwwroot # The folder the action should deploy
-        token: ${{ secrets.ACCESS_TOKEN }}
+      # Checkout the code
+      - name: 🛎️ Checkout
+        uses: actions/checkout@v4
+
+      # Install .NET Core SDK
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          
+      # Install dotnet wasm buildtools workload
+      - name: Install .NET WASM Build Tools
+        run: dotnet workload install wasm-tools
+          
+      # Publishes Blazor project to the release-folder
+      - name: Publish .NET Core Project
+        run: dotnet publish PersonalSite.csproj -c:Release -p:GHPages=true -o dist/Web --nologo
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          BRANCH: gh-pages
+          FOLDER: dist/Web/wwwroot
+          name: gh-pages
       
