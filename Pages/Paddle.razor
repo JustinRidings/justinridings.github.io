@@ -1,0 +1,52 @@
+﻿@using PersonalSite.Data.Models
+
+@namespace Pong
+@inject IJSRuntime JSRuntime
+
+<div class="paddle" style="@Style" @onmousemove="OnMouseMove"></div>
+
+<style>
+    .paddle {
+        position: relative;
+        width: 20px;
+        height: 100px;
+        background-color: white;
+        /* Initial position */
+        top: 250px;
+        left: 10px;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public Player Player { get; set; }
+
+    [Parameter]
+    public string Style { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<float> OnPositionChanged { get; set; }
+
+    private float paddleY = 250; // Initial Y position
+
+    public async Task OnMouseMove(MouseEventArgs e)
+    {
+        // Update the paddle's Y position to follow the mouse
+        PaddleY = Convert.ToSingle(e.ClientY); // Center the paddle on the mouse, assuming the game area starts at the top of the page
+        await base.InvokeAsync(StateHasChanged); // Re-render the component with the new position
+    }
+
+    public float PaddleY
+    {
+        get => paddleY;
+        set
+        {
+            if (paddleY != value)
+            {
+                paddleY = value;
+                Style = $"top: {paddleY}px;";
+                OnPositionChanged.InvokeAsync(paddleY);
+            }
+        }
+    }
+}

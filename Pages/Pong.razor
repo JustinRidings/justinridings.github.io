@@ -1,0 +1,164 @@
+﻿@namespace Pong
+@page "/pong"
+@using System.Timers
+
+<FluentCard Style="background:var(--neutral-layer-3); position: relative; width: 800px; height: 600px; margin: 0 auto;" @onmousemove="OnMouseMove">
+    @if (isGameRunning)
+    {
+        <Paddle Player="Player.One" Style="@($"top: {paddleOneY}px; left: 10px;")" OnPositionChanged="OnPaddleOnePositionChanged" />
+        <AiPaddle Player="Player.Two" Style="@($"top: {paddleTwoY}px; right: 10px; justify-self:end")" OnPositionChanged="OnPaddleTwoPositionChanged" />
+        <Ball PositionX="@ball.Position.X" PositionY="@ball.Position.Y" VelocityX="@ball.VelocityX" VelocityY="@ball.VelocityY" OnPositionChanged="OnBallPositionChanged" />
+    }
+    else
+    {
+        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
+            <FluentSpacer />
+            <FluentButton Appearance="Appearance.Accent" @onclick="StartGame">Start Game</FluentButton>
+        </FluentStack>
+    }
+</FluentCard>
+
+@code {
+    bool isGameRunning { get; set; } = false;
+    bool isPaddleTwoMovingDown { get; set; } = false;
+    private static float paddleOneY = 250;
+    private static float paddleTwoY = 250;
+    private int playerOneScore;
+    private int playerTwoScore;
+    private const float GameWidth = 800;
+    private const float GameHeight = 600;
+    System.Timers.Timer AITimer = new System.Timers.Timer(16); //16ms = 60fps
+
+    private Ball ball = new Ball
+        {
+            Position = new BallPosition { X = 390, Y = 290 },
+            VelocityX = 2.0f,
+            VelocityY = 2.0f
+        };
+
+    public async Task OnMouseMove(MouseEventArgs e)
+    {
+        // Update the paddle's Y position to follow the mouse
+        paddleOneY = Convert.ToSingle(e.ClientY); // Center the paddle on the mouse, assuming the game area starts at the top of the page
+        await base.InvokeAsync(StateHasChanged); // Re-render the component with the new position
+    }
+
+    private void StartGame()
+    {
+        isGameRunning = true;
+        playerOneScore = 0;
+        playerTwoScore = 0;
+        isPaddleTwoMovingDown = true;
+        System.Timers.Timer t = new System.Timers.Timer(16);
+        t.Elapsed += new ElapsedEventHandler(HandleLapse);
+        t.Start();
+    }
+
+    private void HandleLapse(object? sender, ElapsedEventArgs e)
+    {
+        MovePaddleTwo();
+        InvokeAsync(StateHasChanged).Wait();
+    }
+
+
+    private void StopGame()
+    {
+        isGameRunning = false;
+    }
+
+    private void OnPaddleOnePositionChanged(float newY)
+    {
+        paddleOneY = newY;
+    }
+
+    private void OnPaddleTwoPositionChanged(float newY)
+    {
+        paddleTwoY = newY;
+        // Additional logic if needed
+    }
+
+    // Call this method in your game loop to update paddle-2's position
+    private void MovePaddleTwo()
+    {
+        const float paddleHeight = 100; // Paddle's height
+        const float gameAreaHeight = 600; // Game area's height
+        const float step = 5; // Paddle's movement step per update
+
+        // Check if the paddle is at the bottom bound
+        if (paddleTwoY >= gameAreaHeight - paddleHeight)
+        {
+            isPaddleTwoMovingDown = false; // Change direction to move up
+        }
+        // Check if the paddle is at the top bound
+        else if (paddleTwoY <= 0)
+        {
+            isPaddleTwoMovingDown = true; // Change direction to move down
+        }
+
+        // Move the paddle based on the direction
+        if (isPaddleTwoMovingDown)
+        {
+            paddleTwoY += step; // Move down
+        }
+        else
+        {
+            paddleTwoY -= step; // Move up
+        }
+
+        // Clamp the paddle position to the game area bounds
+        paddleTwoY = Math.Clamp(paddleTwoY, 0, gameAreaHeight - paddleHeight);
+    }
+
+    private void ScorePoint(Player scoringPlayer)
+    {
+        if (scoringPlayer == Player.One)
+        {
+            playerOneScore++;
+        }
+        else
+        {
+            playerTwoScore++;
+        }
+
+        ResetBall();
+    }
+
+    private void OnBallPositionChanged(BallPosition position)
+    {
+        // Check for collisions with the top and bottom boundaries
+        if (position.Y <= 0 || position.Y >= GameHeight - 20)
+        {
+            ball.VelocityY *= -1; // Reverse the Y velocity
+        }
+
+        // Check for collisions with the paddles
+        // This is a simplified example; you'll need to check the actual paddle positions
+        // Paddle Width = 20; Paddle Height = 100;
+        if ((position.X <= 10 && position.Y >= paddleOneY && position.Y <= paddleOneY + 100) ||
+            (position.X >= GameWidth - 20 && position.Y >= paddleTwoY && position.Y <= paddleTwoY + 100))
+        {
+            ball.VelocityX *= -1; // Reverse the X velocity
+        }
+
+        // Update the ball's position
+        ball.Position = position;
+
+        // Check for scoring
+        if (position.X <= 0)
+        {
+            // Player Two scores
+            ScorePoint(Player.Two);
+        }
+        else if (position.X >= GameWidth)
+        {
+            // Player One scores
+            ScorePoint(Player.One);
+        }
+    }
+
+    private void ResetBall()
+    {
+        ball.Position = new BallPosition { X = GameWidth / 2, Y = GameHeight / 2 };
+        // You may also want to reset the velocity or set it to a random direction
+    }
+}

@@ -1,0 +1,44 @@
+﻿@using PersonalSite.Data.Models
+
+@namespace Pong
+
+<div class="paddle" style="@Style"></div>
+
+<style>
+    .paddle {
+        position: absolute;
+        width: 20px;
+        height: 100px;
+        background-color: white;
+        /* Initial position */
+        top: 250px;
+        right: 10px;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public Player Player { get; set; }
+
+    [Parameter]
+    public string Style { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback<float> OnPositionChanged { get; set; }
+
+    private float paddleY = 250; // Initial Y position
+
+    public float PaddleY
+    {
+        get => paddleY;
+        set
+        {
+            if (paddleY != value)
+            {
+                paddleY = value;
+                Style = $"top: {paddleY}px;";
+                OnPositionChanged.InvokeAsync(paddleY);
+            }
+        }
+    }
+}

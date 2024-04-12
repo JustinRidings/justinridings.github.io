@@ -1,0 +1,72 @@
+﻿@namespace Pong
+
+<div class="ball" style="@($"left: {PositionX}px; top: {PositionY}px;")"></div>
+
+<style>
+    .ball {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: white;
+        position: absolute;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public float PositionX { get; set; }
+
+    [Parameter]
+    public float PositionY { get; set; }
+
+    [Parameter]
+    public float VelocityX { get; set; } = 2.0f; // Default velocity
+
+    [Parameter]
+    public float VelocityY { get; set; } = 2.0f; // Default velocity
+
+    [Parameter]
+    public EventCallback<BallPosition> OnPositionChanged { get; set; }
+
+    private BallPosition position = new BallPosition();
+    private System.Timers.Timer? movementTimer;
+
+    public BallPosition Position
+    {
+        get => position;
+        set
+        {
+            if (position != value)
+            {
+                position = value;
+                Style = $"left: {position.X}px; top: {position.Y}px;";
+                OnPositionChanged.InvokeAsync(position); // Notify the parent component of the position change
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        movementTimer = new System.Timers.Timer(20); // Update every 20 milliseconds
+        movementTimer.Elapsed += (sender, args) => Move();
+        movementTimer.AutoReset = true;
+        movementTimer.Enabled = true;
+    }
+
+    private void Move()
+    {
+        Position = new BallPosition
+            {
+                X = Position.X + VelocityX,
+                Y = Position.Y + VelocityY
+            };
+    }
+
+    public string Style { get; private set; } = default!;
+
+    // Dispose the timer when the component is disposed
+    public void Dispose()
+    {
+        movementTimer?.Dispose();
+    }
+}
