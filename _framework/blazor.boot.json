@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "PersonalSite",
   "resources": {
-    "hash": "sha256-s/o8YB2HkHEBOEJaoqjxOziu2Ldlu/DA+F9uYF8SHgc=",
+    "hash": "sha256-FSULENuhjp0TDR9r1HzJvcWNOLKE2lRNKHWL9xPDVVA=",
     "jsModuleNative": {
       "dotnet.native.8.0.4.5ldad950xb.js": "sha256-BsaBOB7rs58dTJYIDzgRAFJi68fZSgclGo8zLpuoRns="
     },
@@ -39,7 +39,7 @@
       "Microsoft.FluentUI.AspNetCore.Components.wasm": "sha256-VKNpf7IYkSPHX69YZw0SDX5vQ1buQ+Xr7egmtjJueew=",
       "Microsoft.JSInterop.wasm": "sha256-VFEqy2oKoDlNgJxjA8SGiJVPNYpZdS13GqxajUeaf20=",
       "Microsoft.JSInterop.WebAssembly.wasm": "sha256-m61VgBA4vng3MMYjuLVdLHqsmoYzTYENsLsTGY2UJig=",
-      "PersonalSite.wasm": "sha256-x229OgWH1WCz1VBWeAG2RpMBseDNKmxYGj9Xgr67CAg=",
+      "PersonalSite.wasm": "sha256-fRBgNM1wOcWWlo6977pmhG9KxToujWCJ7gM7BPoOYpo=",
       "System.Collections.Concurrent.wasm": "sha256-z8eldH1exR2HirqguniOp6wUeoaLcl6K/ka0X0FaaJw=",
       "System.Collections.Immutable.wasm": "sha256-A7OcMEtlpNGwTdlKrcdESzo/oHB343gNqRSRgI1AzSI=",
       "System.Collections.wasm": "sha256-0hiLmQhuF1f69ivGpjQHCfTP9JMCj/spwTq1isT1MTo=",
