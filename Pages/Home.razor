@@ -1,5 +1,4 @@
 ﻿@page "/"
-@using System.Timers
 
 <PageTitle>Home</PageTitle>
 <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Style="height:100%">
@@ -12,7 +11,6 @@
                         <img role="button" src="@githubProfilePic" class="face-large" href="@githubProfile" title="@githubProfile" />
                     </a>
                 </div>
-                <img src="http://ghchart.rshah.org/JustinRidings" alt="Justins Github Calendar">
                 <FluentLabel Typo="Typography.Body">
                     View my <a href="https://github.com/JustinRidings">Github</a> Contributions
                 </FluentLabel>
@@ -24,13 +22,6 @@
 
 @code
 {
-    Timer submitTimer = new System.Timers.Timer(5000);
     readonly string githubProfile = @"http://github.com/JustinRidings";
     readonly string githubProfilePic = @"https://avatars.githubusercontent.com/u/49916830";
-
-    public async void OnTimeLapse(object? sender, System.Timers.ElapsedEventArgs e)
-    {
-        await base.InvokeAsync(StateHasChanged);
-    }
-
 }
