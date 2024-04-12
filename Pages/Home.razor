@@ -2,24 +2,25 @@
 @using System.Timers
 
 <PageTitle>Home</PageTitle>
+<FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Style="height:100%">
 
-<FluentGrid Spacing="3" Justify="JustifyContent.Center" Style="padding-top:10px; height:auto">
-    <FluentGridItem xs="12">
-        <FluentCard Style="text-align:center;">
-            <FluentLabel Typo="Typography.HeroTitle">Justin Ridings</FluentLabel>
-            <FluentStack Orientation="Orientation.Horizontal">
-                <FluentSpacer />
+        <FluentCard Style="padding-top:10px;max-height:50%">
+            <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
+                <FluentLabel Typo="Typography.HeroTitle">Justin Ridings</FluentLabel>
                 <div style="padding-right:10px">
                     <a href="@githubProfile">
                         <img role="button" src="@githubProfilePic" class="face-large" href="@githubProfile" title="@githubProfile" />
                     </a>
                 </div>
-                <FluentSpacer />
+                <img src="http://ghchart.rshah.org/JustinRidings" alt="Justins Github Calendar">
+                <FluentLabel Typo="Typography.Body">
+                    View my <a href="https://github.com/JustinRidings">Github</a> Contributions
+                </FluentLabel>
             </FluentStack>
-            <FluentLabel>More to come!</FluentLabel>
         </FluentCard>
-    </FluentGridItem>
-</FluentGrid>
+
+    <FluentSpacer />
+</FluentStack>
 
 @code
 {
