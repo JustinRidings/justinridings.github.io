@@ -47,7 +47,7 @@
 
     protected override void OnInitialized()
     {
-        movementTimer = new System.Timers.Timer(20); // Update every 20 milliseconds
+        movementTimer = new System.Timers.Timer(16);
         movementTimer.Elapsed += (sender, args) => Move();
         movementTimer.AutoReset = true;
         movementTimer.Enabled = true;
