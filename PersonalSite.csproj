@@ -21,6 +21,7 @@
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.DataGrid.EntityFrameworkAdapter" Version="4.*-*" />
     <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.*-* " />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="PSC.Blazor.Components.BrowserDetect" Version="1.0.14" />
     <PackageReference Include="PublishSPAforGitHubPages.Build" Version="2.*-*" />
   </ItemGroup>
 

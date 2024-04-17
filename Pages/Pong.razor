@@ -1,24 +1,51 @@
 ﻿@namespace Pong
+
 @page "/pong"
+
 @using System.Timers
 
-<FluentCard Style="background:var(--neutral-layer-3); position: relative; width: 800px; height: 600px; margin: 0 auto;" @onmousemove="OnMouseMove">
-    @if (isGameRunning)
-    {
-        <Paddle Player="Player.One" Style="@($"top: {paddleOneY}px; left: 10px;")" OnPositionChanged="OnPaddleOnePositionChanged" />
-        <AiPaddle Player="Player.Two" Style="@($"top: {paddleTwoY}px; right: 10px; justify-self:end")" OnPositionChanged="OnPaddleTwoPositionChanged" />
-        <Ball PositionX="@ball.Position.X" PositionY="@ball.Position.Y" VelocityX="@ball.VelocityX" VelocityY="@ball.VelocityY" OnPositionChanged="OnBallPositionChanged" />
-    }
-    else
-    {
-        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
+<PageTitle>Pong</PageTitle>
+
+<BrowserDetect @bind-BrowserInfo="@Info" />
+
+@if (!isMobile)
+{
+    <FluentCard Style="width:100%; height:100%">
+        <FluentStack HorizontalAlignment="HorizontalAlignment.Center">
+            <FluentLabel Style="padding-left:10%;" Typo="Typography.Header">
+                YOU
+            </FluentLabel>
             <FluentSpacer />
-            <FluentButton Appearance="Appearance.Accent" @onclick="StartGame">Start Game</FluentButton>
+            <FluentLabel Style="padding-right:10%;" Typo="Typography.Header">
+                BOT
+            </FluentLabel>
         </FluentStack>
-    }
-</FluentCard>
+        <FluentCard Style="background:var(--neutral-layer-3); position: relative; width: 800px; height: 600px; margin: 0 auto;" @onmousemove="OnMouseMove">
+            @if (isGameRunning)
+            {
+                <Paddle Player="Player.One" Style="@($"top: {paddleOneY}px; left: 10px;")" OnPositionChanged="OnPaddleOnePositionChanged" />
+                <AiPaddle Player="Player.Two" Style="@($"top: {paddleTwoY}px; right: 10px; justify-self:end")" OnPositionChanged="OnPaddleTwoPositionChanged" />
+                <Ball PositionX="@ball.Position.X" PositionY="@ball.Position.Y" VelocityX="@ball.VelocityX" VelocityY="@ball.VelocityY" OnPositionChanged="OnBallPositionChanged" />
+            }
+            else
+            {
+                <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
+                    <FluentSpacer />
+                    <FluentButton Appearance="Appearance.Accent" @onclick="StartGame">Start Game</FluentButton>
+                </FluentStack>
+            }
+        </FluentCard>
+    </FluentCard>
+}
+else
+{
+    <FluentLabel>Unfortunately Pong doesn't work on mobile...yet!</FluentLabel>
+}
+
 
 @code {
+    public BrowserInfo? Info { get; set; }
+    bool isMobile = false;
     bool isGameRunning { get; set; } = false;
     bool isPaddleTwoMovingDown { get; set; } = false;
     private static float paddleOneY = 250;
@@ -29,11 +56,19 @@
     private const float GameHeight = 600;
     System.Timers.Timer AITimer = new System.Timers.Timer(16); //16ms = 60fps
 
+    protected override void OnInitialized()
+    {
+        if (Info != null && Info.IsMobile == true)
+        {
+            isMobile = true;
+        }
+    }
+
     private Ball ball = new Ball
         {
             Position = new BallPosition { X = 390, Y = 290 },
-            VelocityX = 2.0f,
-            VelocityY = 2.0f
+            VelocityX = 4.0f,
+            VelocityY = 4.0f
         };
 
     public async Task OnMouseMove(MouseEventArgs e)
@@ -60,7 +95,6 @@
         InvokeAsync(StateHasChanged).Wait();
     }
 
-
     private void StopGame()
     {
         isGameRunning = false;
@@ -77,7 +111,6 @@
         // Additional logic if needed
     }
 
-    // Call this method in your game loop to update paddle-2's position
     private void MovePaddleTwo()
     {
         const float paddleHeight = 100; // Paddle's height
@@ -132,7 +165,6 @@
         }
 
         // Check for collisions with the paddles
-        // This is a simplified example; you'll need to check the actual paddle positions
         // Paddle Width = 20; Paddle Height = 100;
         if ((position.X <= 10 && position.Y >= paddleOneY && position.Y <= paddleOneY + 100) ||
             (position.X >= GameWidth - 20 && position.Y >= paddleTwoY && position.Y <= paddleTwoY + 100))
@@ -159,6 +191,5 @@
     private void ResetBall()
     {
         ball.Position = new BallPosition { X = GameWidth / 2, Y = GameHeight / 2 };
-        // You may also want to reset the velocity or set it to a random direction
     }
 }

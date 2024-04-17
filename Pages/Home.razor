@@ -1,22 +1,22 @@
 ﻿@page "/"
 
 <PageTitle>Home</PageTitle>
-<FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Style="height:100%">
-
-        <FluentCard Style="padding-top:10px;max-height:50%">
-            <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
-                <FluentLabel Typo="Typography.HeroTitle">Justin Ridings</FluentLabel>
-                <div style="padding-right:10px">
-                    <a href="@githubProfile">
-                        <img role="button" src="@githubProfilePic" class="face-large" href="@githubProfile" title="@githubProfile" />
-                    </a>
-                </div>
-                <FluentLabel Typo="Typography.Body">
-                    View my <a href="https://github.com/JustinRidings">Github</a> Contributions
-                </FluentLabel>
-            </FluentStack>
-        </FluentCard>
-
+<FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Style="height:fit-content">
+    <FluentSpacer />
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
+            <FluentLabel Typo="Typography.HeroTitle">Justin Ridings</FluentLabel>
+            <div style="padding-right:10px;">
+                <a href="@githubProfile">
+                    <img role="button" src="@githubProfilePic" class="face-large" href="@githubProfile" title="@githubProfile" />
+                </a>
+            </div>
+            <FluentLabel Typo="Typography.Body">
+                View my <a href="https://github.com/JustinRidings">Github</a> Contributions
+            </FluentLabel>
+            <img src="https://ghchart.rshah.org/JustinRidings" style="max-width:100%"alt="Github Contribution Calendar">
+        </FluentStack>
+    </FluentCard>
     <FluentSpacer />
 </FluentStack>
 

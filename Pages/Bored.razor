@@ -8,22 +8,35 @@
 <FluentCard>
     <FluentStack Orientation="Orientation.Vertical"
                  HorizontalAlignment="HorizontalAlignment.Center"
-                 VerticalAlignment="VerticalAlignment.Center" VerticalGap="20">
+                 VerticalAlignment="VerticalAlignment.Center"
+                 VerticalGap="20"
+                 Style="max-height:fit-content; max-width:auto">
         @if (isLoading == false)
         {
             <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
+                <FluentSpacer Width="20" />
                 @if (Result != null)
                 {
                     <FluentLabel Typo="Typography.HeroTitle">
-                        <strong>@Result.Activity</strong>
+                        @if (Result.Link != null && Result.Link != string.Empty)
+                        {
+                            <a href="@Result.Link">
+                                <strong>
+                                    @Result.Activity
+                                </strong>
+                            </a>
+                        }
+                        else
+                        {
+                            <a>
+                                <strong>
+                                    @Result.Activity
+                                </strong>
+                            </a>
+                        }
                     </FluentLabel>
                     <FluentSpacer />
-                    @if(Result.Link != null && Result.Link != string.Empty)
-                    {
-                        <FluentLabel Typo="Typography.H2">
-                        <a href="@Result.Link">@Result.Link</a>
-                        </FluentLabel>
-                    }
+
                 }
             </FluentStack>
         }
@@ -34,7 +47,7 @@
     </FluentStack>
     <FluentSpacer />
     <FluentStack HorizontalAlignment="HorizontalAlignment.Center">
-        <FluentButton Appearance="Appearance.Accent" OnClick="GetActivityAsync" Style="padding-top:10px">
+        <FluentButton IconStart=@(new Icons.Regular.Size16.LightbulbPerson()) Appearance="Appearance.Accent" OnClick="GetActivityAsync">
             I'm bored...
         </FluentButton>
     </FluentStack>
