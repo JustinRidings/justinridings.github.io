@@ -26,7 +26,25 @@
         </FluentBodyContent>
     </FluentStack>
     <FluentFooter Style="background-color: var(--neutral-layer-4); justify-content:center;">
-        <FluentLabel Typo="Typography.H6">Powered by @GetFrameworkVersion()</FluentLabel>
+        <FluentStack HorizontalAlignment="HorizontalAlignment.Center">
+            <FluentLabel Typo="Typography.H6">Powered by @GetFrameworkVersion() |</FluentLabel>
+            <a href="https://discordapp.com/users/448647845520867347">
+                <img height="20" width="20"
+                     src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a69f118df70ad7828d4_icon_clyde_blurple_RGB.svg" />
+            </a>
+            <a href="https://www.linkedin.com/in/justinblakeridings/">
+                <img height="20" width="60"
+                     src="https://content.linkedin.com/content/dam/me/brand/en-us/brand-home/illustrations/dsk-e6.svg.original.svg" />
+            </a>
+            <a href="https://www.youtube.com/watch?v=J7mCQC4e3eA">
+                <img height="20" width="30"
+                     src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/1280px-YouTube_full-color_icon_%282017%29.svg.png" />
+            </a>
+            <a href="https://www.nuget.org/profiles/JustinRidings">
+                <img height="20" width="20"
+                     src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/NuGet_project_logo.svg/512px-NuGet_project_logo.svg.png?20200213201929" />
+            </a>
+        </FluentStack>
     </FluentFooter>
     <FluentDialogProvider @rendermode="@RenderMode.InteractiveWebAssembly" />
     <FluentDesignTheme @bind-Mode=Mode StorageName="theme" />
