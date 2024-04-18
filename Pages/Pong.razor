@@ -6,10 +6,6 @@
 
 <PageTitle>Pong</PageTitle>
 
-<BrowserDetect @bind-BrowserInfo="@Info" />
-
-@if (!isMobile)
-{
     <FluentCard Style="width:100%; height:100%">
         <FluentStack HorizontalAlignment="HorizontalAlignment.Center">
             <FluentLabel Style="padding-left:10%;" Typo="Typography.Header">
@@ -36,16 +32,9 @@
             }
         </FluentCard>
     </FluentCard>
-}
-else
-{
-    <FluentLabel>Unfortunately Pong doesn't work on mobile...yet!</FluentLabel>
-}
 
 
 @code {
-    public BrowserInfo? Info { get; set; }
-    bool isMobile = false;
     bool isGameRunning { get; set; } = false;
     bool isPaddleTwoMovingDown { get; set; } = false;
     private static float paddleOneY = 250;
@@ -54,15 +43,6 @@ else
     private int playerTwoScore;
     private const float GameWidth = 800;
     private const float GameHeight = 600;
-    System.Timers.Timer AITimer = new System.Timers.Timer(16); //16ms = 60fps
-
-    protected override void OnInitialized()
-    {
-        if (Info != null && Info.IsMobile == true)
-        {
-            isMobile = true;
-        }
-    }
 
     private Ball ball = new Ball
         {

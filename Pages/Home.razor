@@ -5,16 +5,33 @@
     <FluentSpacer />
     <FluentCard>
         <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
-            <FluentLabel Typo="Typography.HeroTitle">Justin Ridings</FluentLabel>
-            <div style="padding-right:10px;">
-                <a href="@githubProfile">
-                    <img role="button" src="@githubProfilePic" class="face-large" href="@githubProfile" title="@githubProfile" />
-                </a>
-            </div>
-            <FluentLabel Typo="Typography.Body">
-                View my <a href="https://github.com/JustinRidings">Github</a> Contributions
-            </FluentLabel>
-            <img src="https://ghchart.rshah.org/JustinRidings" style="max-width:100%"alt="Github Contribution Calendar">
+            <FluentCard MinimalStyle=true Style="max-width:50%">
+                <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
+                    <div style="padding-right:10px;">
+                        <a href="@githubProfile">
+                            <img role="button" src="@githubProfilePic" class="face-large" href="@githubProfile" title="@githubProfile" />
+                        </a>
+                    </div>
+                    <FluentSpacer />
+                    <FluentLabel Typo="Typography.PaneHeader"><u>About Me</u></FluentLabel>
+                    <FluentSpacer />
+                    <FluentLabel Typo="Typography.Body">
+                        I'm a US Army Veteran, a Microsoft MSSA Graduate, and an Engineer at Microsoft. I've worked on
+                        things like helping to implement the <code>CTRL+SHIFT+WIN+B</code> key combination in Windows,
+                        publishing the <a href="https://www.nuget.org/profiles/BangAnalyze">!analyze Debugging SDK</a>,
+                        creating <a href="https://github.com/microsoft/SymProxyCloud">SymProxyCloud</a>,
+                        and - more than likely - getting the crashes that you hit in Windows fixed by the teams that
+                        own the components.
+                    </FluentLabel>
+                </FluentStack>
+            </FluentCard>
+            <FluentSpacer />
+            <img src="https://ghchart.rshah.org/JustinRidings" style="max-width:100%" alt="Github Contribution Calendar" />
+            <FluentSpacer />
+            <iframe width="75%" height="400" src="@youtubeLink" title="YouTube video player"
+                    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+            </iframe>
         </FluentStack>
     </FluentCard>
     <FluentSpacer />
@@ -24,4 +41,5 @@
 {
     readonly string githubProfile = @"http://github.com/JustinRidings";
     readonly string githubProfilePic = @"https://avatars.githubusercontent.com/u/49916830";
+    readonly string youtubeLink = @"https://www.youtube-nocookie.com/embed/J7mCQC4e3eA?si=T-tjmpBm1zEI9ih0";
 }
