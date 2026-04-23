@@ -1,0 +1,56 @@
+﻿@page "/dogs"
+@using Newtonsoft.Json
+
+@inject HttpClient Http
+
+<PageTitle>Dogs</PageTitle>
+
+<FluentCard>
+    <FluentStack Orientation="Orientation.Vertical"
+                 HorizontalAlignment="HorizontalAlignment.Center"
+                 VerticalAlignment="VerticalAlignment.Center"
+                 Style="max-height:fit-content; max-width:auto">
+        @if (isLoading == false)
+        {
+            @if (Result != null)
+            {
+                @if (Result.Message != null && Result.Status == "success")
+                {
+                    <img src="@Result.Message" />
+                }
+                else
+                {
+                    <a>Error <i>fetching</i> the image. Please try again.</a>
+                }
+            }
+            <FluentSpacer />
+        }
+        else
+        {
+            <FluentProgressRing />
+        }
+    </FluentStack>
+    <FluentSpacer />
+    <FluentStack HorizontalAlignment="HorizontalAlignment.Center">
+        <FluentButton IconStart=@(new Icons.Regular.Size16.LightbulbPerson()) Appearance="Appearance.Accent" OnClick="GetActivityAsync">
+            Show me dat dawg...
+        </FluentButton>
+    </FluentStack>
+</FluentCard>
+
+@code {
+    bool isLoading { get; set; }
+    public DogApiResult? Result { get; set; }
+    public System.Timers.Timer Time { get; set; } = new System.Timers.Timer(3000);
+
+    private async Task GetActivityAsync()
+    {
+        isLoading = true;
+
+        var queryResult = await Http.GetAsync($"https://dog.ceo/api/breeds/image/random");
+        Result = JsonConvert.DeserializeObject<DogApiResult?>(await queryResult.Content.ReadAsStringAsync() ?? string.Empty) ?? null;
+
+        isLoading = false;
+    }
+
+}
