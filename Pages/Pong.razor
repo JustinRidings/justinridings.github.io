@@ -1,175 +1,302 @@
-﻿@namespace Pong
-
 @page "/pong"
-
-@using System.Timers
+@implements IAsyncDisposable
 
 <PageTitle>Pong</PageTitle>
 
-    <FluentCard Style="width:100%; height:100%">
-        <FluentStack HorizontalAlignment="HorizontalAlignment.Center">
-            <FluentLabel Style="padding-left:10%;" Typo="Typography.Header">
-                YOU
-            </FluentLabel>
-            <FluentSpacer />
-            <FluentLabel Style="padding-right:10%;" Typo="Typography.Header">
-                BOT
-            </FluentLabel>
-        </FluentStack>
-        <FluentCard Style="background:var(--neutral-layer-3); position: relative; width: 800px; height: 600px; margin: 0 auto;" @onmousemove="OnMouseMove">
-            @if (isGameRunning)
-            {
-                <Paddle Player="Player.One" Style="@($"top: {paddleOneY}px; left: 10px;")" OnPositionChanged="OnPaddleOnePositionChanged" />
-                <AiPaddle Player="Player.Two" Style="@($"top: {paddleTwoY}px; right: 10px; justify-self:end")" OnPositionChanged="OnPaddleTwoPositionChanged" />
-                <Ball PositionX="@ball.Position.X" PositionY="@ball.Position.Y" VelocityX="@ball.VelocityX" VelocityY="@ball.VelocityY" OnPositionChanged="OnBallPositionChanged" />
-            }
-            else
-            {
-                <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
-                    <FluentSpacer />
-                    <FluentButton Appearance="Appearance.Accent" @onclick="StartGame">Start Game</FluentButton>
-                </FluentStack>
-            }
-        </FluentCard>
-    </FluentCard>
+<FluentCard Class="pong-container">
+    <div class="pong-scoreboard">
+        <FluentLabel Typo="Typography.Header">YOU: @playerScore</FluentLabel>
+        <FluentLabel Typo="Typography.Header">|</FluentLabel>
+        <FluentLabel Typo="Typography.Header">BOT: @botScore</FluentLabel>
+    </div>
 
+    <div class="pong-arena"
+         tabindex="0"
+         @ref="arenaRef"
+         @onmousemove="OnMouseMove"
+         @onkeydown="OnKeyDown"
+         @onkeydown:preventDefault="true">
+
+        <div class="pong-centerline"></div>
+        <div class="pong-paddle pong-paddle--left" style="top:@((int)playerY)px;"></div>
+        <div class="pong-paddle pong-paddle--right" style="top:@((int)botY)px;"></div>
+        <div class="pong-ball" style="left:@((int)ballX)px; top:@((int)ballY)px;"></div>
+
+        @if (gameState == GameState.Idle)
+        {
+            <div class="pong-overlay">
+                <FluentLabel Typo="Typography.Header">PONG</FluentLabel>
+                <p>Move with mouse, W/S, or ↑/↓ &nbsp;·&nbsp; Space to pause</p>
+                <p>First to @WinningScore wins.</p>
+                <FluentButton Appearance="Appearance.Accent" @onclick="StartGame">Start Game</FluentButton>
+            </div>
+        }
+        else if (gameState == GameState.Paused)
+        {
+            <div class="pong-overlay">
+                <FluentLabel Typo="Typography.Header">Paused</FluentLabel>
+                <FluentButton Appearance="Appearance.Accent" @onclick="TogglePause">Resume</FluentButton>
+            </div>
+        }
+        else if (gameState == GameState.GameOver)
+        {
+            <div class="pong-overlay">
+                <FluentLabel Typo="Typography.Header">@(playerScore > botScore ? "You Win! 🏆" : "Bot Wins 🤖")</FluentLabel>
+                <p>Final score: @playerScore – @botScore</p>
+                <FluentButton Appearance="Appearance.Accent" @onclick="StartGame">Play Again</FluentButton>
+            </div>
+        }
+    </div>
+
+    <div class="pong-controls">
+        <FluentLabel Typo="Typography.Body">Difficulty:</FluentLabel>
+        @foreach (var d in Enum.GetValues<Difficulty>())
+        {
+            <FluentButton Appearance="@(difficulty == d ? Appearance.Accent : Appearance.Neutral)"
+                          @onclick="() => SetDifficulty(d)">@d</FluentButton>
+        }
+        @if (gameState is GameState.Playing or GameState.Paused)
+        {
+            <FluentButton @onclick="TogglePause">@(gameState == GameState.Paused ? "Resume" : "Pause")</FluentButton>
+            <FluentButton @onclick="ResetGame">Reset</FluentButton>
+        }
+    </div>
+</FluentCard>
 
 @code {
-    bool isGameRunning { get; set; } = false;
-    bool isPaddleTwoMovingDown { get; set; } = false;
-    private static float paddleOneY = 250;
-    private static float paddleTwoY = 250;
-    private int playerOneScore;
-    private int playerTwoScore;
-    private const float GameWidth = 800;
-    private const float GameHeight = 600;
+    private const float ArenaWidth = 800;
+    private const float ArenaHeight = 500;
+    private const float PaddleWidth = 12;
+    private const float PaddleHeight = 100;
+    private const float BallSize = 16;
+    private const float PaddleOffsetX = 20;
+    private const float KeyboardStep = 24;
+    private const float MaxBallSpeed = 12f;
+    private const int WinningScore = 7;
+    private const int FrameMs = 16;
 
-    private Ball ball = new Ball
-        {
-            Position = new BallPosition { X = 390, Y = 290 },
-            VelocityX = 4.0f,
-            VelocityY = 4.0f
-        };
+    private enum GameState { Idle, Playing, Paused, GameOver }
+    private enum Difficulty { Easy, Medium, Hard }
 
-    public async Task OnMouseMove(MouseEventArgs e)
+    private GameState gameState = GameState.Idle;
+    private Difficulty difficulty = Difficulty.Medium;
+
+    private float playerY = (ArenaHeight - PaddleHeight) / 2f;
+    private float botY = (ArenaHeight - PaddleHeight) / 2f;
+    private float ballX = (ArenaWidth - BallSize) / 2f;
+    private float ballY = (ArenaHeight - BallSize) / 2f;
+    private float ballVx = 5f;
+    private float ballVy = 3f;
+
+    private int playerScore;
+    private int botScore;
+
+    private System.Timers.Timer? loop;
+    private ElementReference arenaRef;
+    private bool focusOnNextRender;
+
+    protected override void OnInitialized()
     {
-        // Update the paddle's Y position to follow the mouse
-        paddleOneY = Convert.ToSingle(e.ClientY); // Center the paddle on the mouse, assuming the game area starts at the top of the page
-        await base.InvokeAsync(StateHasChanged); // Re-render the component with the new position
+        loop = new System.Timers.Timer(FrameMs);
+        loop.Elapsed += (_, _) => InvokeAsync(Tick);
+        loop.AutoReset = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusOnNextRender)
+        {
+            focusOnNextRender = false;
+            try { await arenaRef.FocusAsync(); } catch { /* ignore */ }
+        }
     }
 
     private void StartGame()
     {
-        isGameRunning = true;
-        playerOneScore = 0;
-        playerTwoScore = 0;
-        isPaddleTwoMovingDown = true;
-        System.Timers.Timer t = new System.Timers.Timer(16);
-        t.Elapsed += new ElapsedEventHandler(HandleLapse);
-        t.Start();
+        playerScore = 0;
+        botScore = 0;
+        ResetBall(toPlayer: Random.Shared.Next(2) == 0);
+        gameState = GameState.Playing;
+        focusOnNextRender = true;
+        loop?.Start();
     }
 
-    private void HandleLapse(object? sender, ElapsedEventArgs e)
+    private void TogglePause()
     {
-        MovePaddleTwo();
-        InvokeAsync(StateHasChanged).Wait();
+        if (gameState == GameState.Playing)
+        {
+            gameState = GameState.Paused;
+            loop?.Stop();
+        }
+        else if (gameState == GameState.Paused)
+        {
+            gameState = GameState.Playing;
+            focusOnNextRender = true;
+            loop?.Start();
+        }
     }
 
-    private void StopGame()
+    private void ResetGame()
     {
-        isGameRunning = false;
-    }
-
-    private void OnPaddleOnePositionChanged(float newY)
-    {
-        paddleOneY = newY;
-    }
-
-    private void OnPaddleTwoPositionChanged(float newY)
-    {
-        paddleTwoY = newY;
-        // Additional logic if needed
-    }
-
-    private void MovePaddleTwo()
-    {
-        const float paddleHeight = 100; // Paddle's height
-        const float gameAreaHeight = 600; // Game area's height
-        const float step = 5; // Paddle's movement step per update
-
-        // Check if the paddle is at the bottom bound
-        if (paddleTwoY >= gameAreaHeight - paddleHeight)
-        {
-            isPaddleTwoMovingDown = false; // Change direction to move up
-        }
-        // Check if the paddle is at the top bound
-        else if (paddleTwoY <= 0)
-        {
-            isPaddleTwoMovingDown = true; // Change direction to move down
-        }
-
-        // Move the paddle based on the direction
-        if (isPaddleTwoMovingDown)
-        {
-            paddleTwoY += step; // Move down
-        }
-        else
-        {
-            paddleTwoY -= step; // Move up
-        }
-
-        // Clamp the paddle position to the game area bounds
-        paddleTwoY = Math.Clamp(paddleTwoY, 0, gameAreaHeight - paddleHeight);
-    }
-
-    private void ScorePoint(Player scoringPlayer)
-    {
-        if (scoringPlayer == Player.One)
-        {
-            playerOneScore++;
-        }
-        else
-        {
-            playerTwoScore++;
-        }
-
+        loop?.Stop();
+        gameState = GameState.Idle;
+        playerScore = 0;
+        botScore = 0;
         ResetBall();
     }
 
-    private void OnBallPositionChanged(BallPosition position)
+    private void SetDifficulty(Difficulty d) => difficulty = d;
+
+    private void Tick()
     {
-        // Check for collisions with the top and bottom boundaries
-        if (position.Y <= 0 || position.Y >= GameHeight - 20)
+        if (gameState != GameState.Playing) return;
+
+        ballX += ballVx;
+        ballY += ballVy;
+
+        // Top/bottom walls
+        if (ballY <= 0)
         {
-            ball.VelocityY *= -1; // Reverse the Y velocity
+            ballY = 0;
+            ballVy = MathF.Abs(ballVy);
+        }
+        else if (ballY >= ArenaHeight - BallSize)
+        {
+            ballY = ArenaHeight - BallSize;
+            ballVy = -MathF.Abs(ballVy);
         }
 
-        // Check for collisions with the paddles
-        // Paddle Width = 20; Paddle Height = 100;
-        if ((position.X <= 10 && position.Y >= paddleOneY && position.Y <= paddleOneY + 100) ||
-            (position.X >= GameWidth - 20 && position.Y >= paddleTwoY && position.Y <= paddleTwoY + 100))
+        // Paddle collisions (reposition to avoid clipping)
+        var playerPaddleRight = PaddleOffsetX + PaddleWidth;
+        var botPaddleLeft = ArenaWidth - PaddleOffsetX - PaddleWidth;
+
+        if (ballVx < 0
+            && ballX <= playerPaddleRight
+            && ballX + BallSize >= PaddleOffsetX
+            && ballY + BallSize >= playerY
+            && ballY <= playerY + PaddleHeight)
         {
-            ball.VelocityX *= -1; // Reverse the X velocity
+            ballX = playerPaddleRight;
+            BounceOffPaddle(playerY);
+        }
+        else if (ballVx > 0
+            && ballX + BallSize >= botPaddleLeft
+            && ballX <= botPaddleLeft + PaddleWidth
+            && ballY + BallSize >= botY
+            && ballY <= botY + PaddleHeight)
+        {
+            ballX = botPaddleLeft - BallSize;
+            BounceOffPaddle(botY);
         }
 
-        // Update the ball's position
-        ball.Position = position;
+        MoveBot();
 
-        // Check for scoring
-        if (position.X <= 0)
+        // Score
+        if (ballX + BallSize < 0)
         {
-            // Player Two scores
-            ScorePoint(Player.Two);
+            botScore++;
+            CheckWinOrReset(toPlayer: true);
         }
-        else if (position.X >= GameWidth)
+        else if (ballX > ArenaWidth)
         {
-            // Player One scores
-            ScorePoint(Player.One);
+            playerScore++;
+            CheckWinOrReset(toPlayer: false);
+        }
+
+        StateHasChanged();
+    }
+
+    private void BounceOffPaddle(float paddleY)
+    {
+        ballVx = -ballVx;
+        // Slight speedup on each hit, capped
+        ballVx = Math.Clamp(ballVx * 1.05f, -MaxBallSpeed, MaxBallSpeed);
+
+        // Angle based on where the ball hit the paddle (-1..1)
+        var ballCenter = ballY + BallSize / 2f;
+        var paddleCenter = paddleY + PaddleHeight / 2f;
+        var hitOffset = (ballCenter - paddleCenter) / (PaddleHeight / 2f);
+        ballVy = Math.Clamp(hitOffset, -1f, 1f) * 6f;
+    }
+
+    private void MoveBot()
+    {
+        var (speed, deadZone) = difficulty switch
+        {
+            Difficulty.Easy => (3.5f, 30f),
+            Difficulty.Medium => (5.5f, 12f),
+            Difficulty.Hard => (8f, 4f),
+            _ => (5.5f, 12f),
+        };
+
+        var ballCenter = ballY + BallSize / 2f;
+        var botCenter = botY + PaddleHeight / 2f;
+        var diff = ballCenter - botCenter;
+
+        if (Math.Abs(diff) > deadZone)
+        {
+            botY += Math.Sign(diff) * speed;
+        }
+        botY = Math.Clamp(botY, 0, ArenaHeight - PaddleHeight);
+    }
+
+    private void CheckWinOrReset(bool toPlayer)
+    {
+        if (playerScore >= WinningScore || botScore >= WinningScore)
+        {
+            gameState = GameState.GameOver;
+            loop?.Stop();
+        }
+        else
+        {
+            ResetBall(toPlayer);
         }
     }
 
-    private void ResetBall()
+    private void ResetBall(bool toPlayer = false)
     {
-        ball.Position = new BallPosition { X = GameWidth / 2, Y = GameHeight / 2 };
+        ballX = (ArenaWidth - BallSize) / 2f;
+        ballY = (ArenaHeight - BallSize) / 2f;
+        ballVx = (toPlayer ? -1 : 1) * 5f;
+        ballVy = (Random.Shared.Next(2) == 0 ? -1 : 1) * 3f;
+    }
+
+    private void OnMouseMove(MouseEventArgs e)
+    {
+        // OffsetY is relative to the arena div (paddles/ball have pointer-events:none)
+        var y = (float)e.OffsetY - PaddleHeight / 2f;
+        playerY = Math.Clamp(y, 0, ArenaHeight - PaddleHeight);
+    }
+
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "w":
+            case "W":
+            case "ArrowUp":
+                playerY = Math.Clamp(playerY - KeyboardStep, 0, ArenaHeight - PaddleHeight);
+                break;
+            case "s":
+            case "S":
+            case "ArrowDown":
+                playerY = Math.Clamp(playerY + KeyboardStep, 0, ArenaHeight - PaddleHeight);
+                break;
+            case " ":
+                if (gameState is GameState.Playing or GameState.Paused)
+                    TogglePause();
+                break;
+        }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        if (loop is not null)
+        {
+            loop.Stop();
+            loop.Dispose();
+            loop = null;
+        }
+        return ValueTask.CompletedTask;
     }
 }
