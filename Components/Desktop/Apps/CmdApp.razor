@@ -1,0 +1,132 @@
+@* Mini cmd.exe with a fixed command set. *@
+@implements IDisposable
+
+<div class="xp-cmd" @onclick="FocusInput">
+    <div class="xp-cmd-output">
+@foreach (var line in _lines)
+{
+    <div>@line</div>
+}
+        <div class="xp-cmd-prompt-line">
+            <span>@_cwd&gt;</span>
+            <input @ref="_inputRef"
+                   class="xp-cmd-input"
+                   @bind="_buffer"
+                   @bind:event="oninput"
+                   @onkeydown="OnKey"
+                   spellcheck="false"
+                   autocomplete="off" />
+        </div>
+    </div>
+</div>
+
+<style>
+    .xp-cmd { background: black; color: #c0c0c0; font-family: "Lucida Console", "Courier New", monospace; font-size: 13px; height: 100%; padding: 4px; overflow: auto; }
+    .xp-cmd-output > div { white-space: pre-wrap; }
+    .xp-cmd-prompt-line { display: flex; }
+    .xp-cmd-input { flex: 1; background: black; color: #c0c0c0; border: none; outline: none; font-family: inherit; font-size: inherit; }
+</style>
+
+@code {
+    private readonly List<string> _lines = new()
+    {
+        "Microsoft Windows XP [Version 5.1.2600]",
+        "(C) Copyright 1985-2001 Microsoft Corp. (or this fake one, anyway).",
+        "",
+        "Type 'help' for available commands.",
+        ""
+    };
+
+    private string _buffer = "";
+    private string _cwd = "C:\\Documents and Settings\\Justin";
+    private ElementReference _inputRef;
+    private bool _focusOnNextRender = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusOnNextRender)
+        {
+            _focusOnNextRender = false;
+            try { await _inputRef.FocusAsync(); } catch { }
+        }
+    }
+
+    private async Task FocusInput()
+    {
+        try { await _inputRef.FocusAsync(); } catch { }
+    }
+
+    private void OnKey(KeyboardEventArgs e)
+    {
+        if (e.Key != "Enter") return;
+        var cmd = (_buffer ?? "").Trim();
+        _lines.Add($"{_cwd}>{cmd}");
+        _buffer = "";
+        if (cmd.Length == 0) return;
+        Run(cmd);
+        _focusOnNextRender = true;
+    }
+
+    private void Run(string cmd)
+    {
+        var parts = cmd.Split(' ', 2);
+        var name = parts[0].ToLowerInvariant();
+        switch (name)
+        {
+            case "help":
+                _lines.Add("Available: help, whoami, dir, ipconfig, ver, ping, cls, exit, color, echo");
+                break;
+            case "whoami":
+                _lines.Add("WIN-XP-PORTFOLIO\\Justin");
+                break;
+            case "dir":
+                _lines.Add(" Volume in drive C is XP-FANTASY");
+                _lines.Add(" Volume Serial Number is 4FC3-F744");
+                _lines.Add("");
+                _lines.Add(" Directory of " + _cwd);
+                _lines.Add("");
+                _lines.Add(" 04/23/2026  about.txt          1,337 bytes");
+                _lines.Add(" 04/23/2026  resume.doc        24,242 bytes");
+                _lines.Add(" 04/23/2026  pong.exe          81,920 bytes");
+                _lines.Add(" 04/23/2026  pe-inspector.exe 137,216 bytes");
+                _lines.Add("            4 File(s)   244,715 bytes");
+                break;
+            case "ipconfig":
+                _lines.Add("");
+                _lines.Add("Windows IP Configuration");
+                _lines.Add("");
+                _lines.Add("Ethernet adapter Local Area Connection:");
+                _lines.Add("   Connection-specific DNS Suffix . : portfolio.local");
+                _lines.Add("   IP Address. . . . . . . . . . . . : 192.168.0.42");
+                _lines.Add("   Subnet Mask . . . . . . . . . . . : 255.255.255.0");
+                _lines.Add("   Default Gateway . . . . . . . . . : 192.168.0.1");
+                break;
+            case "ver":
+                _lines.Add("");
+                _lines.Add("Microsoft Windows XP Portfolio Edition [Version 5.1.justinridings]");
+                break;
+            case "ping":
+                var host = parts.Length > 1 ? parts[1] : "localhost";
+                _lines.Add($"Pinging {host} with 32 bytes of data:");
+                for (int i = 0; i < 4; i++) _lines.Add($"Reply from {host}: bytes=32 time<1ms TTL=128");
+                break;
+            case "echo":
+                _lines.Add(parts.Length > 1 ? parts[1] : "");
+                break;
+            case "color":
+                _lines.Add("Set screen colors? Not in this fake shell, sorry.");
+                break;
+            case "cls":
+                _lines.Clear();
+                break;
+            case "exit":
+                _lines.Add("(use the X button in the title bar to close this window)");
+                break;
+            default:
+                _lines.Add($"'{parts[0]}' is not recognized as an internal or external command, operable program or batch file.");
+                break;
+        }
+    }
+
+    public void Dispose() { }
+}

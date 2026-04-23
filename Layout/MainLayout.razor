@@ -1,95 +1,90 @@
-﻿@using System.Reflection
+@using System.Reflection
 @using System.Runtime.Versioning
-
-@inject IMessageService MessageService
-
 @inherits LayoutComponentBase
 
-<FluentLayout>
-    <FluentHeader Style="background-color: var(--neutral-layer-4)">
-        <div style="padding-right:10px">
-            <a href="@githubProfile">
-                <img role="button" src="@githubProfilePic" class="face" href="@githubProfile" title="@githubProfile" />
-            </a>
-        </div>
-        <FluentLabel Typo="Typography.H6">Justin Ridings</FluentLabel>
-        <FluentSpacer />
-        <FluentSwitch ValueChanged="ChangeDesignTheme" Label="@Mode.ToString()" Style="padding-right:10px" />
-        <NotificationCenter />
-    </FluentHeader>
-    <FluentStack Class="main" Orientation="Orientation.Horizontal" Width="100%">
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Dense="true">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+        <MudLink Href="@_githubProfile" Underline="Underline.None" Class="d-flex align-center mr-3">
+            <MudAvatar Size="Size.Small" Class="mr-2">
+                <MudImage Src="@_githubProfilePic" Alt="GitHub avatar" />
+            </MudAvatar>
+        </MudLink>
+        <MudText Typo="Typo.h6">Justin Ridings</MudText>
+        <MudSpacer />
+        <MudTooltip Text="@(_isDarkMode ? "Switch to light mode" : "Switch to dark mode")">
+            <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                           Color="Color.Inherit"
+                           OnClick="@(() => _isDarkMode = !_isDarkMode)" />
+        </MudTooltip>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="1" Variant="@DrawerVariant.Responsive">
         <NavMenu />
-        <FluentBodyContent>
-            <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" Class="content">
-                @Body
-            </FluentStack>
-        </FluentBodyContent>
-    </FluentStack>
-    <FluentFooter Style="background-color: var(--neutral-layer-4); justify-content:center;">
-        <FluentStack HorizontalAlignment="HorizontalAlignment.Center">
-            <FluentLabel Typo="Typography.H6">Powered by @GetFrameworkVersion() |</FluentLabel>
-            <a href="https://discordapp.com/users/448647845520867347">
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="py-6 flex-grow-1">
+            @Body
+        </MudContainer>
+
+        <MudPaper Square="true" Elevation="2" Class="pa-3 mt-auto d-flex flex-wrap align-center justify-center gap-3">
+            <MudText Typo="Typo.body2">Powered by @GetFrameworkVersion()</MudText>
+            <MudText Typo="Typo.body2">|</MudText>
+            <MudLink Href="https://discordapp.com/users/448647845520867347" Target="_blank">
                 <img height="20" width="20"
-                     src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a69f118df70ad7828d4_icon_clyde_blurple_RGB.svg" />
-            </a>
-            <a href="https://www.linkedin.com/in/justinblakeridings/">
+                     src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a69f118df70ad7828d4_icon_clyde_blurple_RGB.svg"
+                     alt="Discord" />
+            </MudLink>
+            <MudLink Href="https://www.linkedin.com/in/justinblakeridings/" Target="_blank">
                 <img height="20" width="60"
-                     src="https://content.linkedin.com/content/dam/me/brand/en-us/brand-home/illustrations/dsk-e6.svg.original.svg" />
-            </a>
-            <a href="https://www.youtube.com/watch?v=J7mCQC4e3eA">
+                     src="https://content.linkedin.com/content/dam/me/brand/en-us/brand-home/illustrations/dsk-e6.svg.original.svg"
+                     alt="LinkedIn" />
+            </MudLink>
+            <MudLink Href="https://www.youtube.com/watch?v=J7mCQC4e3eA" Target="_blank">
                 <img height="20" width="30"
-                     src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/1280px-YouTube_full-color_icon_%282017%29.svg.png" />
-            </a>
-            <a href="https://www.nuget.org/profiles/JustinRidings">
+                     src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/1280px-YouTube_full-color_icon_%282017%29.svg.png"
+                     alt="YouTube" />
+            </MudLink>
+            <MudLink Href="https://www.nuget.org/profiles/JustinRidings" Target="_blank">
                 <img height="20" width="20"
-                     src="https://upload.wikimedia.org/wikipedia/commons/2/25/NuGet_project_logo.svg" />
-            </a>
-        </FluentStack>
-    </FluentFooter>
-    <FluentDialogProvider @rendermode="@RenderMode.InteractiveWebAssembly" />
-    <FluentDesignTheme @bind-Mode=Mode StorageName="theme" />
-</FluentLayout>
+                     src="https://upload.wikimedia.org/wikipedia/commons/2/25/NuGet_project_logo.svg"
+                     alt="NuGet" />
+            </MudLink>
+        </MudPaper>
+    </MudMainContent>
+</MudLayout>
 
 @code {
+    private bool _drawerOpen = true;
+    private bool _isDarkMode = true;
 
-    public DesignThemeModes Mode { get; set; }
+    private readonly string _githubProfile = "http://github.com/JustinRidings";
+    private readonly string _githubProfilePic = "https://avatars.githubusercontent.com/u/49916830";
 
-    readonly string githubProfile = @"http://github.com/JustinRidings";
-    readonly string githubProfilePic = @"https://avatars.githubusercontent.com/u/49916830";
+    private readonly MudTheme _theme = new()
+    {
+        PaletteDark = new PaletteDark
+        {
+            Primary = "#4FC3F7",
+            Secondary = "#80CBC4",
+            AppbarBackground = "#1a1a1a",
+            Background = "#121212",
+            Surface = "#1e1e1e",
+            DrawerBackground = "#1a1a1a",
+        }
+    };
 
-    // protected override void OnAfterRender(bool firstRender)
-    // {
-    //     if (firstRender)
-    //     {
-    //         MessageService.ShowMessageBar(options =>
-    //                 {
-    //                     options.Intent = MessageIntent.Info;
-    //                     options.Title = $"Example";
-    //                     options.Body = "This is an example notification!";
-    //                     options.Timestamp = DateTime.Now;
-    //                     options.Section = "MESSAGE_CENTER";
-    //                 });
-    //     }
-    // }
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
 
     public static string GetFrameworkVersion()
     {
         var tfAttribute = Assembly.GetExecutingAssembly().GetCustomAttribute<TargetFrameworkAttribute>();
-
         return tfAttribute?.FrameworkDisplayName ?? "Blazor WASM";
-    }
-
-    public void ChangeDesignTheme(bool isLightMode)
-    {
-        if (isLightMode == true)
-        {
-            Mode = DesignThemeModes.Light;
-            return;
-        }
-        else
-        {
-            Mode = DesignThemeModes.Dark;
-            return;
-        }
     }
 }

@@ -1,0 +1,50 @@
+@* XP-styled taskbar with Start button, open windows, system tray. *@
+@using PersonalSite.Services
+@implements IDisposable
+
+<div class="xp-taskbar">
+    <button class="xp-start-button @(StartOpen ? "active" : "")"
+            @onclick="ToggleStart"
+            @onclick:stopPropagation="true">
+        <span class="xp-start-flag">⊞</span>
+        <span class="xp-start-text">start</span>
+    </button>
+
+    <div class="xp-taskbar-items">
+        @foreach (var w in Manager.Windows)
+        {
+            <button class="xp-taskbar-item @(w.Id == Manager.FocusedId && !w.IsMinimized ? "active" : "")"
+                    @onclick="() => Manager.RestoreOrMinimize(w.Id)">
+                <span class="xp-taskbar-icon">@((MarkupString)w.App.IconHtml)</span>
+                <span class="xp-taskbar-label">@w.App.Title</span>
+            </button>
+        }
+    </div>
+
+    <SystemTray OnBsodRequested="OnBsodRequested" />
+</div>
+
+@if (StartOpen)
+{
+    <StartMenu Manager="Manager" OnClose="() => StartOpen = false" />
+}
+
+@code {
+    [Parameter, EditorRequired] public WindowManager Manager { get; set; } = null!;
+    [Parameter] public EventCallback OnBsodRequested { get; set; }
+
+    private bool StartOpen { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Manager.Changed += OnManagerChanged;
+    }
+
+    private void OnManagerChanged() => InvokeAsync(StateHasChanged);
+
+    private void ToggleStart() => StartOpen = !StartOpen;
+
+    public void CloseStart() => StartOpen = false;
+
+    public void Dispose() => Manager.Changed -= OnManagerChanged;
+}

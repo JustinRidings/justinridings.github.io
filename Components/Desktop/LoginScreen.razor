@@ -1,0 +1,45 @@
+@* XP Welcome / login screen with single user tile. *@
+
+<div class="xp-login">
+    <div class="xp-login-banner">
+        <div class="xp-login-banner-text">
+            <div class="xp-login-title">To begin, click your user name</div>
+        </div>
+    </div>
+
+    <div class="xp-login-divider"></div>
+
+    <div class="xp-login-tiles">
+        <button class="xp-login-tile" @onclick="OnLogin">
+            <div class="xp-login-avatar">👤</div>
+            <div class="xp-login-info">
+                <div class="xp-login-name">Justin Ridings</div>
+                <div class="xp-login-hint">Debugging Engineer</div>
+            </div>
+        </button>
+    </div>
+
+    <div class="xp-login-footer">
+        <span>After you log on, you can add or change accounts.</span>
+        <span>Just go to Control Panel and click User Accounts.</span>
+    </div>
+</div>
+
+<style>
+    .xp-login { position: fixed; inset: 0; background: linear-gradient(to bottom, #5a7edc, #245edb 30%, #103194 70%, #5a7edc); color: white; font-family: "Trebuchet MS", Tahoma, sans-serif; display: flex; flex-direction: column; z-index: 100000; }
+    .xp-login-banner { background: linear-gradient(to bottom, #5a7edc, #245edb); padding: 24px 60px; border-bottom: 2px solid #fefefe; }
+    .xp-login-title { font-size: 22px; font-weight: 300; }
+    .xp-login-divider { height: 4px; background: linear-gradient(to right, transparent, #ffac1f, #ffac1f, transparent); }
+    .xp-login-tiles { flex: 1; display: flex; align-items: center; justify-content: center; }
+    .xp-login-tile { background: rgba(255,255,255,0.05); border: none; padding: 12px 24px; display: flex; align-items: center; gap: 16px; color: white; cursor: pointer; border-radius: 4px; }
+    .xp-login-tile:hover { background: rgba(255,255,255,0.18); }
+    .xp-login-avatar { font-size: 64px; background: linear-gradient(to bottom, #6ec0f7, #245edb); width: 96px; height: 96px; display: flex; align-items: center; justify-content: center; border: 3px solid white; border-radius: 4px; }
+    .xp-login-info { text-align: left; }
+    .xp-login-name { font-size: 22px; }
+    .xp-login-hint { font-size: 13px; color: #d0e0ff; }
+    .xp-login-footer { background: linear-gradient(to bottom, #245edb, #103194); padding: 12px 60px; font-size: 12px; display: flex; flex-direction: column; gap: 2px; border-top: 2px solid #fefefe; }
+</style>
+
+@code {
+    [Parameter] public EventCallback OnLogin { get; set; }
+}

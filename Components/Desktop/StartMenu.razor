@@ -1,0 +1,98 @@
+@* XP Start Menu — two-column blue/green panel. *@
+@using Microsoft.AspNetCore.Components.Web
+@using PersonalSite.Services
+
+<div class="xp-startmenu-backdrop" @onclick="OnClose"></div>
+
+<div class="xp-startmenu" @onclick:stopPropagation="true">
+    <div class="xp-startmenu-header">
+        <div class="xp-startmenu-avatar">👤</div>
+        <div class="xp-startmenu-username">Justin Ridings</div>
+    </div>
+
+    <div class="xp-startmenu-body">
+        <div class="xp-startmenu-col xp-startmenu-col-left">
+            @foreach (var pinned in PinnedKeys)
+            {
+                @if (Manager.Registry.TryGetValue(pinned, out var app))
+                {
+                    <button class="xp-startmenu-item" @onclick="() => Launch(app.Key)">
+                        <span class="xp-startmenu-icon">@((MarkupString)app.IconHtml)</span>
+                        <div class="xp-startmenu-text">
+                            <div class="xp-startmenu-title">@app.Title</div>
+                            <div class="xp-startmenu-sub">@SubtitleFor(app.Key)</div>
+                        </div>
+                    </button>
+                }
+            }
+            <hr class="xp-startmenu-sep" />
+            <div class="xp-startmenu-allprogs">All Programs &nbsp;▶</div>
+        </div>
+
+        <div class="xp-startmenu-col xp-startmenu-col-right">
+            @foreach (var rightKey in RightColumnKeys)
+            {
+                @if (Manager.Registry.TryGetValue(rightKey, out var app))
+                {
+                    <button class="xp-startmenu-item xp-startmenu-item-right" @onclick="() => Launch(app.Key)">
+                        <span class="xp-startmenu-icon">@((MarkupString)app.IconHtml)</span>
+                        <span>@app.Title</span>
+                    </button>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="xp-startmenu-footer">
+        <button class="xp-startmenu-footer-btn" @onclick="OnLogOff">
+            <span class="xp-startmenu-icon">🔒</span> Log Off
+        </button>
+        <button class="xp-startmenu-footer-btn" @onclick="OnShutDown">
+            <span class="xp-startmenu-icon">⏻</span> Turn Off Computer
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public WindowManager Manager { get; set; } = null!;
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private static readonly string[] PinnedKeys = new[]
+    {
+        "about", "pe-inspector", "pong", "projects", "resume", "ie", "msn"
+    };
+
+    private static readonly string[] RightColumnKeys = new[]
+    {
+        "my-computer", "recycle-bin", "cmd"
+    };
+
+    private static string SubtitleFor(string key) => key switch
+    {
+        "about" => "Notepad",
+        "pe-inspector" => "PE Analyzer",
+        "pong" => "Game",
+        "projects" => "Folder",
+        "resume" => "Microsoft Word",
+        "ie" => "Web Browser",
+        "msn" => "Messenger",
+        "my-computer" => "Explorer",
+        "recycle-bin" => "System",
+        "cmd" => "Command Prompt",
+        _ => ""
+    };
+
+    private void Launch(string key)
+    {
+        Manager.Open(key);
+        OnClose.InvokeAsync();
+    }
+
+    private void OnLogOff()
+    {
+        Manager.CloseAll();
+        OnClose.InvokeAsync();
+    }
+
+    private void OnShutDown() => OnLogOff();
+}

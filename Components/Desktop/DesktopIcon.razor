@@ -1,0 +1,24 @@
+@* A desktop icon. Double-click opens the registered app. *@
+@using Microsoft.AspNetCore.Components.Web
+
+<div class="xp-desktop-icon @(Selected ? "selected" : "")"
+     tabindex="0"
+     @onclick="OnSingleClick"
+     @ondblclick="OnDoubleClick"
+     @onclick:stopPropagation="true">
+    <div class="xp-desktop-icon-image">
+        @((MarkupString)Icon)
+    </div>
+    <div class="xp-desktop-icon-label">@Label</div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    [Parameter, EditorRequired] public string Icon { get; set; } = "";
+    [Parameter] public EventCallback OnOpen { get; set; }
+    [Parameter] public bool Selected { get; set; }
+    [Parameter] public EventCallback OnSelect { get; set; }
+
+    private async Task OnSingleClick() => await OnSelect.InvokeAsync();
+    private async Task OnDoubleClick() => await OnOpen.InvokeAsync();
+}

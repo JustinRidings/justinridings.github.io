@@ -1,0 +1,43 @@
+@* Projects folder. *@
+<div class="xp-explorer">
+    <div class="xp-explorer-toolbar">📁 Projects</div>
+    <div class="xp-explorer-body">
+        <div class="xp-explorer-grid">
+            @foreach (var p in _projects)
+            {
+                <a class="xp-explorer-item" href="@p.Url" target="_blank" rel="noopener" title="@p.Description">
+                    <div class="xp-explorer-icon">@p.Icon</div>
+                    <div class="xp-explorer-label">@p.Name</div>
+                </a>
+            }
+        </div>
+        <hr />
+        <div style="padding: 8px; font-size: 11px; color: #555;">
+            Double-click any folder to open the GitHub repository in a new window.
+        </div>
+    </div>
+</div>
+
+<style>
+    .xp-explorer { font-family: Tahoma, sans-serif; font-size: 11px; height: 100%; display: flex; flex-direction: column; }
+    .xp-explorer-toolbar { background: #ece9d8; padding: 4px 8px; border-bottom: 1px solid #aca899; }
+    .xp-explorer-body { flex: 1; overflow: auto; padding: 8px; background: white; }
+    .xp-explorer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; padding: 8px; }
+    .xp-explorer-item { background: none; border: 1px solid transparent; padding: 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; color: black; }
+    .xp-explorer-item:hover { background: #d8e4f8; border-color: #316ac5; }
+    .xp-explorer-icon { font-size: 36px; }
+    .xp-explorer-label { font-size: 11px; text-align: center; }
+</style>
+
+@code {
+    private record Project(string Name, string Icon, string Url, string Description);
+
+    private static readonly Project[] _projects = new[]
+    {
+        new Project("SymProxyCloud",   "📁", "https://github.com/microsoft/SymProxyCloud", "Modern Microsoft Symbol Server proxy"),
+        new Project("!analyze SDK",    "📦", "https://www.nuget.org/profiles/BangAnalyze",  "WinDbg automation NuGets"),
+        new Project("BSR",             "🛠", "https://github.com/JustinRidings",            "Black-screen recovery work"),
+        new Project("This Site",       "🌐", "https://github.com/JustinRidings/justinridings.github.io", "Blazor WASM portfolio"),
+        new Project("All My Repos",    "🐙", "https://github.com/JustinRidings",            "Everything else on GitHub"),
+    };
+}

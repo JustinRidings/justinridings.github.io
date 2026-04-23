@@ -1,0 +1,66 @@
+@* Draggable, resizable XP-styled window. Renders the registered app via DynamicComponent. *@
+@using Microsoft.AspNetCore.Components.Web
+@using PersonalSite.Services
+
+<div class="window xp-window @(Focused ? "focused" : "")"
+     style="@OuterStyle"
+     @onmousedown="OnFocus"
+     @onmousedown:stopPropagation="true">
+
+    <div class="title-bar"
+         @onmousedown="StartDrag"
+         @ondblclick="OnTitleDblClick">
+        <div class="title-bar-text">
+            @((MarkupString)Win.App.IconHtml)
+            <span class="ml-1">@Win.App.Title</span>
+        </div>
+        <div class="title-bar-controls">
+            <button aria-label="Minimize" @onclick="OnMinimize" @onclick:stopPropagation="true"></button>
+            <button aria-label="@(Win.IsMaximized ? "Restore" : "Maximize")"
+                    @onclick="OnToggleMax" @onclick:stopPropagation="true"></button>
+            <button aria-label="Close" @onclick="OnClose" @onclick:stopPropagation="true"></button>
+        </div>
+    </div>
+
+    <div class="window-body xp-window-body">
+        <DynamicComponent Type="Win.App.ComponentType" Parameters="Win.Parameters" />
+    </div>
+
+    @if (!Win.IsMaximized)
+    {
+        <div class="xp-resize-handle" @onmousedown="StartResize"></div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public WindowState Win { get; set; } = null!;
+    [Parameter, EditorRequired] public WindowManager Manager { get; set; } = null!;
+    [Parameter] public bool Focused { get; set; }
+    [Parameter] public EventCallback<string> OnStartDrag { get; set; }
+    [Parameter] public EventCallback<string> OnStartResize { get; set; }
+
+    private string OuterStyle =>
+        Win.IsMaximized
+            ? $"left:0; top:0; width:100vw; height:calc(100vh - 30px); z-index:{Win.ZIndex};"
+            : $"left:{Win.X}px; top:{Win.Y}px; width:{Win.Width}px; height:{Win.Height}px; z-index:{Win.ZIndex};";
+
+    private void OnFocus() => Manager.Focus(Win.Id);
+    private void OnMinimize() => Manager.Minimize(Win.Id);
+    private void OnToggleMax() => Manager.ToggleMaximize(Win.Id);
+    private void OnClose() => Manager.Close(Win.Id);
+    private void OnTitleDblClick() => Manager.ToggleMaximize(Win.Id);
+
+    private async Task StartDrag(MouseEventArgs e)
+    {
+        if (Win.IsMaximized) return;
+        Manager.Focus(Win.Id);
+        await OnStartDrag.InvokeAsync(Win.Id);
+    }
+
+    private async Task StartResize(MouseEventArgs e)
+    {
+        if (Win.IsMaximized) return;
+        Manager.Focus(Win.Id);
+        await OnStartResize.InvokeAsync(Win.Id);
+    }
+}

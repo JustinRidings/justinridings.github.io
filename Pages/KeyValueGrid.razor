@@ -1,0 +1,19 @@
+@* Simple key/value table used by PE Inspector *@
+<MudPaper Class="pa-3" Elevation="0" Outlined="true">
+    <MudText Typo="Typo.subtitle1" Class="mb-2">@Title</MudText>
+    <MudTable Items="Items" Dense="true" Hover="true" Striped="true" Bordered="false">
+        <HeaderContent>
+            <MudTh Style="width: 280px;">Field</MudTh>
+            <MudTh>Value</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.Item1</MudTd>
+            <MudTd><code>@context.Item2</code></MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter, EditorRequired] public IEnumerable<(string, string)> Items { get; set; } = [];
+}

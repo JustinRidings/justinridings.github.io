@@ -17,8 +17,8 @@
     width: 800px;
     height: 500px;
     margin: 0 auto;
-    background: var(--neutral-layer-3);
-    border: 2px solid var(--neutral-stroke-rest, #888);
+    background: var(--mud-palette-background-gray, #2a2a2a);
+    border: 2px solid var(--mud-palette-lines-default, #888);
     overflow: hidden;
     cursor: none;
     outline: none;
@@ -26,7 +26,7 @@
 }
 
     .pong-arena:focus-visible {
-        border-color: var(--accent-fill-rest);
+        border-color: var(--mud-palette-primary, #4FC3F7);
     }
 
 .pong-centerline {
@@ -37,7 +37,7 @@
     width: 2px;
     background: repeating-linear-gradient(
         to bottom,
-        var(--neutral-foreground-rest) 0 12px,
+        var(--mud-palette-text-primary, #fff) 0 12px,
         transparent 12px 24px
     );
     transform: translateX(-50%);
@@ -49,7 +49,7 @@
     position: absolute;
     width: 12px;
     height: 100px;
-    background: var(--neutral-foreground-rest);
+    background: var(--mud-palette-text-primary, #fff);
     border-radius: 4px;
     pointer-events: none;
 }
@@ -61,7 +61,7 @@
     position: absolute;
     width: 16px;
     height: 16px;
-    background: var(--neutral-foreground-rest);
+    background: var(--mud-palette-text-primary, #fff);
     border-radius: 50%;
     pointer-events: none;
 }

@@ -1,84 +1,386 @@
-@import '/_content/Microsoft.FluentUI.AspNetCore.Components/css/reboot.css';
-
-body {
-    --body-font: "Segoe UI Variable", "Segoe UI", sans-serif;
-    font-family: var(--body-font);
-    font-size: var(--type-ramp-base-font-size);
-    line-height: var(--type-ramp-base-line-height);
+html, body {
+    height: 100%;
     margin: 0;
 }
 
-.face {
-    width: 32px;
-    height: 32px;
-    border: 1px solid silver;
-    border-radius:25px
+body {
+    font-family: 'Roboto', "Segoe UI", sans-serif;
 }
 
-.face-large {
-    width: 132px;
-    height: 132px;
-    border: 1px solid silver;
-    border-radius: 25px
-}
-
-.navmenu-icon {
-    display: none;
-}
-
-.main {
-    min-height: calc(100dvh - 86px);
-    color: var(--neutral-foreground-rest);
-    align-items: stretch !important;
-}
-
-.body-content {
-    align-self: stretch;
-    height: unset !important;
+#app {
+    min-height: 100vh;
     display: flex;
+    flex-direction: column;
 }
 
-.content {
-    padding: 0.5rem 1.5rem;
-    align-self: stretch !important;
+#app > .mud-layout {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
-footer {
-    background-color: #003D51;
+.mud-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+code {
+    color: #c02d76;
+}
+
+/* ============================================================
+   Windows XP Desktop styling
+   Built on top of xp.css; this file contains everything xp.css
+   doesn't ship — desktop layout, taskbar, start menu, icons, etc.
+   ============================================================ */
+
+.xp-desktop {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(to bottom, #4f9bff 0%, #75c2ff 35%, #b6e5b6 65%, #6cb84c 100%);
+    color: white;
+    overflow: hidden;
+    font-family: Tahoma, "Segoe UI", sans-serif;
+    user-select: none;
+    outline: none;
+}
+
+.xp-desktop.fade-in {
+    animation: xp-fade-in 600ms ease-out;
+}
+
+@keyframes xp-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Desktop icons grid */
+.xp-desktop-icons {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: grid;
+    grid-template-columns: 84px;
+    grid-auto-rows: 92px;
+    gap: 4px;
+}
+
+.xp-desktop-icon {
+    width: 84px;
+    height: 92px;
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: flex-start;
+    padding: 6px 4px;
+    cursor: pointer;
+    border-radius: 2px;
     text-align: center;
-    height: 50px;
+    outline: none;
 }
 
-    footer .link1 {
-        grid-column: 2;
-        justify-content: start;
-    }
-
-    footer .link2 {
-        grid-column: 3;
-        justify-self: end;
-    }
-
-    footer a {
-        color: var(--neutral-foreground-rest);
-        text-decoration: none;
-    }
-
-        footer a:focus {
-            outline: 1px dashed;
-            outline-offset: 3px;
-        }
-
-        footer a:hover {
-            text-decoration: underline;
-        }
-
-.alert {
-    border: 1px dashed var(--accent-fill-rest);
-    padding: 5px;
+.xp-desktop-icon:hover .xp-desktop-icon-image {
+    filter: brightness(1.15);
 }
 
+.xp-desktop-icon.selected {
+    background: rgba(49, 106, 197, 0.4);
+    border: 1px dotted rgba(255,255,255,0.6);
+}
+
+.xp-desktop-icon-image {
+    font-size: 36px;
+    line-height: 1;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+    margin-bottom: 4px;
+}
+
+.xp-desktop-icon-label {
+    color: white;
+    font-size: 11px;
+    text-shadow: 1px 1px 2px black, 0 0 2px black;
+    line-height: 1.2;
+    word-wrap: break-word;
+}
+
+/* Sticky note — bottom-right desktop joke */
+.xp-desktop-stickynote {
+    position: absolute;
+    top: 60px;
+    right: 24px;
+    width: 180px;
+    background: #fff8a0;
+    color: #333;
+    padding: 10px 12px 12px;
+    transform: rotate(2deg);
+    box-shadow: 2px 4px 8px rgba(0,0,0,0.3);
+    font-family: "Comic Sans MS", "Segoe Print", cursive;
+    font-size: 13px;
+}
+
+.xp-desktop-stickynote ul {
+    margin: 4px 0 0;
+    padding-left: 20px;
+}
+
+/* ===== Window chrome ===== */
+.xp-window {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 4px 4px 12px rgba(0,0,0,0.4);
+    min-width: 220px;
+    min-height: 140px;
+}
+
+.xp-window .title-bar {
+    cursor: move;
+    user-select: none;
+}
+
+.xp-window-body {
+    flex: 1;
+    overflow: hidden;
+    background: #ece9d8;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.xp-window-body > * {
+    flex: 1;
+    min-height: 0;
+}
+
+.xp-resize-handle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
+    background:
+        linear-gradient(135deg, transparent 50%, #888 50%, #888 60%, transparent 60%, transparent 70%, #888 70%, #888 80%, transparent 80%);
+    z-index: 1;
+}
+
+/* ===== Taskbar ===== */
+.xp-taskbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(to bottom, #245edb 0%, #2e6fee 8%, #245edb 30%, #1d54c4 50%, #245edb 100%);
+    border-top: 1px solid #0a3a8a;
+    display: flex;
+    align-items: stretch;
+    z-index: 1000;
+    color: white;
+    font-family: Tahoma, sans-serif;
+}
+
+.xp-start-button {
+    background: linear-gradient(to bottom, #4ea33b 0%, #3c8a2c 30%, #287d1f 60%, #1f6517 100%);
+    border: none;
+    border-right: 1px solid #1d3a16;
+    color: white;
+    font-style: italic;
+    font-weight: bold;
+    font-size: 16px;
+    padding: 0 18px 0 12px;
+    cursor: pointer;
+    border-radius: 0 14px 14px 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 4px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.xp-start-button:hover { filter: brightness(1.1); }
+.xp-start-button.active { background: linear-gradient(to bottom, #1f6517, #287d1f, #3c8a2c, #4ea33b); }
+.xp-start-flag { font-size: 18px; }
+
+.xp-taskbar-items {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 4px;
+    overflow: hidden;
+}
+
+.xp-taskbar-item {
+    background: linear-gradient(to bottom, #4889e7, #245edb);
+    border: 1px solid #0a3a8a;
+    color: white;
+    padding: 2px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+    max-width: 200px;
+    overflow: hidden;
+    border-radius: 2px;
+}
+
+.xp-taskbar-item.active { background: linear-gradient(to bottom, #1d54c4, #245edb); box-shadow: inset 1px 1px 2px rgba(0,0,0,0.4); }
+
+.xp-taskbar-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* System tray */
+.xp-systemtray {
+    background: linear-gradient(to bottom, #1a4ec4, #0f3aaa);
+    border-left: 1px solid #5891e5;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+}
+
+.xp-tray-icon { cursor: default; }
+.xp-tray-icon-secret { opacity: 0.4; cursor: pointer; }
+.xp-tray-icon-secret:hover { opacity: 1; }
+.xp-tray-clock { padding-left: 6px; }
+
+/* ===== Start Menu ===== */
+.xp-startmenu-backdrop {
+    position: fixed;
+    inset: 0;
+    background: transparent;
+    z-index: 1100;
+}
+
+.xp-startmenu {
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    width: 380px;
+    background: white;
+    border: 2px solid #245edb;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    z-index: 1101;
+    color: black;
+    font-family: Tahoma, sans-serif;
+    font-size: 12px;
+    box-shadow: 4px -4px 12px rgba(0,0,0,0.4);
+    overflow: hidden;
+}
+
+.xp-startmenu-header {
+    background: linear-gradient(to bottom, #245edb 0%, #1d54c4 100%);
+    color: white;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #ffac1f;
+}
+
+.xp-startmenu-avatar { font-size: 36px; background: #ffce6e; padding: 4px 8px; border: 2px solid white; border-radius: 4px; }
+.xp-startmenu-username { font-size: 16px; font-weight: bold; }
+
+.xp-startmenu-body { display: grid; grid-template-columns: 200px 180px; }
+.xp-startmenu-col-left { background: white; padding: 6px; }
+.xp-startmenu-col-right { background: #d3e5fa; padding: 6px; }
+
+.xp-startmenu-item {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 4px 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 12px;
+    color: black;
+    border-radius: 2px;
+}
+.xp-startmenu-item:hover { background: #316ac5; color: white; }
+.xp-startmenu-item:hover .xp-startmenu-sub { color: #d4e0f5; }
+
+.xp-startmenu-icon { font-size: 22px; line-height: 1; min-width: 22px; }
+.xp-startmenu-text .xp-startmenu-title { font-weight: bold; }
+.xp-startmenu-sub { font-size: 11px; color: #666; }
+
+.xp-startmenu-sep { border: none; border-top: 1px solid #d4d0c8; margin: 4px 0; }
+.xp-startmenu-allprogs { padding: 6px; font-weight: bold; color: #316ac5; }
+
+.xp-startmenu-footer {
+    background: linear-gradient(to bottom, #d3e5fa, #b6d4f5);
+    border-top: 1px solid #245edb;
+    padding: 6px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.xp-startmenu-footer-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #003;
+}
+.xp-startmenu-footer-btn:hover { text-decoration: underline; }
+
+/* Context menu */
+.xp-context-menu {
+    position: fixed;
+    background: #ece9d8;
+    border: 1px solid #aca899;
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    z-index: 1200;
+    font-family: Tahoma, sans-serif;
+    font-size: 11px;
+    color: black;
+    padding: 2px;
+    min-width: 160px;
+}
+
+.xp-context-item { padding: 4px 16px; cursor: pointer; }
+.xp-context-item:hover:not(.disabled) { background: #316ac5; color: white; }
+.xp-context-item.disabled { color: #999; cursor: default; }
+.xp-context-divider { border-top: 1px solid #d4d0c8; margin: 2px 0; }
+
+/* Toast */
+.xp-toast {
+    position: fixed;
+    bottom: 50px;
+    right: 16px;
+    background: #ffffd0;
+    color: #333;
+    padding: 10px 14px;
+    border: 1px solid #aaaa55;
+    border-radius: 8px;
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    font-family: Tahoma, sans-serif;
+    font-size: 12px;
+    z-index: 5000;
+    cursor: pointer;
+    max-width: 300px;
+}
+
+@media (max-width: 767px) {
+    .xp-desktop-icons, .xp-desktop-stickynote { display: none; }
+}
+
+/* ===== Existing Blazor stuff below ===== */
 
 #blazor-error-ui {
     background: lightyellow;
@@ -143,54 +445,66 @@ footer {
         content: var(--blazor-load-percentage-text, "Loading");
     }
 
-code {
-    color: #c02d76;
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+    margin: 20px 0;
 }
 
-@media (max-width: 600px) {
-    .main {
-        flex-direction: column !important;
-        row-gap: 0 !important;
-    }
-
-    nav.sitenav {
-        width: 100%;
-        height: 100%;
-    }
-
-    #main-menu {
-        width: 100% !important;
-    }
-
-        #main-menu > div:first-child:is(.expander) {
-            display: none;
-        }
-
-    .navmenu {
-        width: 100%;
-    }
-
-    #navmenu-toggle {
-        appearance: none;
-    }
-
-        #navmenu-toggle ~ nav {
-            display: none;
-        }
-
-        #navmenu-toggle:checked ~ nav {
-            display: block;
-        }
-
-    .navmenu-icon {
+    #blazor-error-ui .dismiss {
         cursor: pointer;
-        z-index: 10;
-        display: block;
         position: absolute;
-        top: 3%;
-        right: 1%;
-        width: 20px;
-        height: 20px;
-        border: none;
+        right: 0.75rem;
+        top: 0.5rem;
     }
+
+.blazor-error-boundary {
+    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
+    padding: 1rem 1rem 1rem 3.7rem;
+    color: white;
 }
+
+    .blazor-error-boundary::before {
+        content: "An error has occurred. "
+    }
+
+.loading-progress {
+    position: relative;
+    display: block;
+    width: 8rem;
+    height: 8rem;
+    margin: 20vh auto 1rem auto;
+}
+
+    .loading-progress circle {
+        fill: none;
+        stroke: #e0e0e0;
+        stroke-width: 0.6rem;
+        transform-origin: 50% 50%;
+        transform: rotate(-90deg);
+    }
+
+        .loading-progress circle:last-child {
+            stroke: #1b6ec2;
+            stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
+            transition: stroke-dasharray 0.05s ease-in-out;
+        }
+
+.loading-progress-text {
+    position: absolute;
+    text-align: center;
+    font-weight: bold;
+    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+}
+
+    .loading-progress-text:after {
+        content: var(--blazor-load-percentage-text, "Loading");
+    }

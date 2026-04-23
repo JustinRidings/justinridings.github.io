@@ -1,0 +1,35 @@
+@* Recycle Bin — joke "deleted" items. *@
+<div class="xp-explorer">
+    <div class="xp-explorer-toolbar">🗑️ Recycle Bin — items recently culled from this portfolio</div>
+    <div class="xp-explorer-body">
+        <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #ece9d8;">
+                    <th style="text-align: left; padding: 4px;">Name</th>
+                    <th style="text-align: left; padding: 4px;">Original Location</th>
+                    <th style="text-align: left; padding: 4px;">Date Deleted</th>
+                    <th style="text-align: left; padding: 4px;">Reason</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>📄 Bored.razor</td><td>/bored</td><td>2026-04</td><td>CORS-blocked + not very cool</td></tr>
+                <tr><td>📦 Microsoft.FluentUI.AspNetCore</td><td>/packages</td><td>2026-04</td><td>Migrated to MudBlazor</td></tr>
+                <tr><td>📄 NotificationCenter.razor</td><td>/Layout</td><td>2026-04</td><td>Yanked with FluentUI</td></tr>
+                <tr><td>📦 Newtonsoft.Json</td><td>/packages</td><td>2026-04</td><td>System.Text.Json works fine</td></tr>
+                <tr><td>📄 ActivityResult.cs</td><td>/Data/Models</td><td>2026-04</td><td>Bored API was a dead end</td></tr>
+                <tr><td>📄 Old portfolio code</td><td>/everywhere</td><td>various</td><td>Replaced by this XP desktop 🎉</td></tr>
+            </tbody>
+        </table>
+        <p style="padding: 8px; font-size: 11px; color: #555;">
+            <i>The Recycle Bin is empty in spirit, but full of stories.</i>
+        </p>
+    </div>
+</div>
+
+<style>
+    .xp-explorer { font-family: Tahoma, sans-serif; font-size: 11px; height: 100%; display: flex; flex-direction: column; }
+    .xp-explorer-toolbar { background: #ece9d8; padding: 4px 8px; border-bottom: 1px solid #aca899; }
+    .xp-explorer-body { flex: 1; overflow: auto; background: white; }
+    .xp-explorer-body tbody tr:nth-child(even) { background: #f7f7f7; }
+    .xp-explorer-body td { padding: 4px; border-bottom: 1px solid #eee; }
+</style>

@@ -1,0 +1,59 @@
+@* Internet Explorer 6 — address bar with bookmarks that open real URLs in new tab. *@
+
+<div class="xp-ie">
+    <div class="xp-ie-toolbar">
+        <span class="xp-ie-icon">🌐</span>
+        <span>Internet Explorer</span>
+    </div>
+    <div class="xp-ie-addressbar">
+        <span>Address</span>
+        <input value="@_address" @oninput="(e) => _address = e.Value?.ToString() ?? string.Empty" @onkeydown="OnKey" />
+        <button @onclick="Go">Go</button>
+    </div>
+    <div class="xp-ie-body">
+        <h2>Welcome to the Internet (1999)</h2>
+        <p>This browser doesn't actually browse. But these bookmarks open in your real browser:</p>
+        <ul>
+            <li>🐙 <a href="https://github.com/JustinRidings" target="_blank" rel="noopener">GitHub — JustinRidings</a></li>
+            <li>💼 <a href="https://www.linkedin.com/in/justinblakeridings/" target="_blank" rel="noopener">LinkedIn</a></li>
+            <li>📦 <a href="https://www.nuget.org/profiles/JustinRidings" target="_blank" rel="noopener">NuGet — JustinRidings</a></li>
+            <li>📦 <a href="https://www.nuget.org/profiles/BangAnalyze" target="_blank" rel="noopener">NuGet — BangAnalyze</a></li>
+            <li>💬 <a href="https://discordapp.com/users/448647845520867347" target="_blank" rel="noopener">Discord</a></li>
+            <li>🎬 <a href="https://www.youtube.com/watch?v=J7mCQC4e3eA" target="_blank" rel="noopener">YouTube</a></li>
+            <li>🛠 <a href="https://github.com/microsoft/SymProxyCloud" target="_blank" rel="noopener">SymProxyCloud</a></li>
+        </ul>
+        @if (!string.IsNullOrEmpty(_msg))
+        {
+            <p style="color: #b00;"><b>@_msg</b></p>
+        }
+    </div>
+    <div class="xp-ie-statusbar">
+        <span>🔒 Internet | Estimated remaining: 30 minutes (56k modem)</span>
+    </div>
+</div>
+
+<style>
+    .xp-ie { background: #ece9d8; height: 100%; display: flex; flex-direction: column; font-family: Tahoma, sans-serif; font-size: 11px; }
+    .xp-ie-toolbar { background: linear-gradient(to bottom, #245edb, #1a3fa3); color: white; padding: 4px 8px; }
+    .xp-ie-addressbar { display: flex; align-items: center; gap: 4px; padding: 4px; background: #ece9d8; border-bottom: 1px solid #aca899; }
+    .xp-ie-addressbar input { flex: 1; padding: 2px 6px; border: 1px solid #7f9db9; }
+    .xp-ie-body { flex: 1; padding: 12px 16px; background: white; overflow: auto; font-size: 13px; font-family: "Times New Roman", serif; }
+    .xp-ie-body h2 { color: #00006c; font-size: 18px; }
+    .xp-ie-body a { color: #00006c; text-decoration: underline; }
+    .xp-ie-statusbar { background: #ece9d8; border-top: 1px solid #aca899; padding: 2px 6px; font-size: 11px; color: #444; }
+</style>
+
+@code {
+    private string _address = "http://www.google.com";
+    private string _msg = "";
+
+    private void Go()
+    {
+        _msg = "Page cannot be displayed. (We don't actually browse.) Try a bookmark below.";
+    }
+
+    private void OnKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") Go();
+    }
+}

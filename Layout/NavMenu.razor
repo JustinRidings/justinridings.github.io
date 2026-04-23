@@ -1,14 +1,6 @@
-﻿<div class="navmenu">
-    <input type="checkbox" title="Menu expand/collapse toggle" id="navmenu-toggle" class="navmenu-icon" />
-    <label for="navmenu-toggle" class="navmenu-icon"><FluentIcon Value="@(new Icons.Regular.Size20.Navigation())" Color="Color.Fill" /></label>
-    <nav class="sitenav" aria-labelledby="main-menu" onclick="document.getElementById('navmenu-toggle').click();">
-        <FluentNavMenu Id="main-menu" Width="250" Collapsible="true" Title="Navigation menu" @bind-Expanded="expanded">
-             <FluentNavLink Href="/" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())" IconColor="Color.Accent">Home</FluentNavLink>
-            <FluentNavLink Href="pong" Icon="@(new Icons.Regular.Size20.SportHockey())" IconColor="Color.Accent">Pong</FluentNavLink>
-        </FluentNavMenu>
-    </nav>
-</div>
-
-@code {
-    private bool expanded = false;
-}
+@* Rendered inside MudDrawer in MainLayout *@
+<MudNavMenu>
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+    <MudNavLink Href="pe-inspector" Icon="@Icons.Material.Filled.Memory">PE Inspector</MudNavLink>
+    <MudNavLink Href="pong" Icon="@Icons.Material.Filled.SportsHockey">Pong</MudNavLink>
+</MudNavMenu>

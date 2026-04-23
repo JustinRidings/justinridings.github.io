@@ -3,11 +3,11 @@
 
 <PageTitle>Pong</PageTitle>
 
-<FluentCard Class="pong-container">
+<MudPaper Class="pong-container pa-4" Elevation="3">
     <div class="pong-scoreboard">
-        <FluentLabel Typo="Typography.Header">YOU: @playerScore</FluentLabel>
-        <FluentLabel Typo="Typography.Header">|</FluentLabel>
-        <FluentLabel Typo="Typography.Header">BOT: @botScore</FluentLabel>
+        <MudText Typo="Typo.h5">YOU: @playerScore</MudText>
+        <MudText Typo="Typo.h5">|</MudText>
+        <MudText Typo="Typo.h5">BOT: @botScore</MudText>
     </div>
 
     <div class="pong-arena"
@@ -25,43 +25,44 @@
         @if (gameState == GameState.Idle)
         {
             <div class="pong-overlay">
-                <FluentLabel Typo="Typography.Header">PONG</FluentLabel>
+                <MudText Typo="Typo.h4">PONG</MudText>
                 <p>Move with mouse, W/S, or ↑/↓ &nbsp;·&nbsp; Space to pause</p>
                 <p>First to @WinningScore wins.</p>
-                <FluentButton Appearance="Appearance.Accent" @onclick="StartGame">Start Game</FluentButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="StartGame">Start Game</MudButton>
             </div>
         }
         else if (gameState == GameState.Paused)
         {
             <div class="pong-overlay">
-                <FluentLabel Typo="Typography.Header">Paused</FluentLabel>
-                <FluentButton Appearance="Appearance.Accent" @onclick="TogglePause">Resume</FluentButton>
+                <MudText Typo="Typo.h4">Paused</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="TogglePause">Resume</MudButton>
             </div>
         }
         else if (gameState == GameState.GameOver)
         {
             <div class="pong-overlay">
-                <FluentLabel Typo="Typography.Header">@(playerScore > botScore ? "You Win! 🏆" : "Bot Wins 🤖")</FluentLabel>
+                <MudText Typo="Typo.h4">@(playerScore > botScore ? "You Win! 🏆" : "Bot Wins 🤖")</MudText>
                 <p>Final score: @playerScore – @botScore</p>
-                <FluentButton Appearance="Appearance.Accent" @onclick="StartGame">Play Again</FluentButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="StartGame">Play Again</MudButton>
             </div>
         }
     </div>
 
     <div class="pong-controls">
-        <FluentLabel Typo="Typography.Body">Difficulty:</FluentLabel>
+        <MudText Typo="Typo.body1">Difficulty:</MudText>
         @foreach (var d in Enum.GetValues<Difficulty>())
         {
-            <FluentButton Appearance="@(difficulty == d ? Appearance.Accent : Appearance.Neutral)"
-                          @onclick="() => SetDifficulty(d)">@d</FluentButton>
+            <MudButton Variant="@(difficulty == d ? Variant.Filled : Variant.Outlined)"
+                       Color="@(difficulty == d ? Color.Primary : Color.Default)"
+                       OnClick="() => SetDifficulty(d)">@d</MudButton>
         }
         @if (gameState is GameState.Playing or GameState.Paused)
         {
-            <FluentButton @onclick="TogglePause">@(gameState == GameState.Paused ? "Resume" : "Pause")</FluentButton>
-            <FluentButton @onclick="ResetGame">Reset</FluentButton>
+            <MudButton Variant="Variant.Outlined" OnClick="TogglePause">@(gameState == GameState.Paused ? "Resume" : "Pause")</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="ResetGame">Reset</MudButton>
         }
     </div>
-</FluentCard>
+</MudPaper>
 
 @code {
     private const float ArenaWidth = 800;
@@ -154,7 +155,6 @@
         ballX += ballVx;
         ballY += ballVy;
 
-        // Top/bottom walls
         if (ballY <= 0)
         {
             ballY = 0;
@@ -166,7 +166,6 @@
             ballVy = -MathF.Abs(ballVy);
         }
 
-        // Paddle collisions (reposition to avoid clipping)
         var playerPaddleRight = PaddleOffsetX + PaddleWidth;
         var botPaddleLeft = ArenaWidth - PaddleOffsetX - PaddleWidth;
 
@@ -191,7 +190,6 @@
 
         MoveBot();
 
-        // Score
         if (ballX + BallSize < 0)
         {
             botScore++;
@@ -209,10 +207,8 @@
     private void BounceOffPaddle(float paddleY)
     {
         ballVx = -ballVx;
-        // Slight speedup on each hit, capped
         ballVx = Math.Clamp(ballVx * 1.05f, -MaxBallSpeed, MaxBallSpeed);
 
-        // Angle based on where the ball hit the paddle (-1..1)
         var ballCenter = ballY + BallSize / 2f;
         var paddleCenter = paddleY + PaddleHeight / 2f;
         var hitOffset = (ballCenter - paddleCenter) / (PaddleHeight / 2f);
@@ -263,7 +259,6 @@
 
     private void OnMouseMove(MouseEventArgs e)
     {
-        // OffsetY is relative to the arena div (paddles/ball have pointer-events:none)
         var y = (float)e.OffsetY - PaddleHeight / 2f;
         playerY = Math.Clamp(y, 0, ArenaHeight - PaddleHeight);
     }

@@ -1,0 +1,73 @@
+@* Full-screen BSOD overlay. Triggered by Ctrl+Alt+Del or hidden tray icon. *@
+
+<div class="xp-bsod" @onclick="OnDismiss">
+<pre class="xp-bsod-text">
+A problem has been detected and Windows has been shut down to prevent
+damage to your portfolio.
+
+IRQL_NOT_LESS_OR_EQUAL
+
+If this is the first time you've seen this Stop error screen,
+restart your computer. If this screen appears again, you should
+hire @_engineerName.
+
+Technical information:
+
+*** STOP: 0x0000000A (0x00000000, 0x00000002, 0x00000001, 0xJUSTIN42)
+
+***  portfolio.sys - Address 0x4FC3F744 base at 0xDEADBEEF, DateStamp justin
+
+Beginning dump of physical memory
+Physical memory dump complete.
+Contact your system administrator or technical support group for further
+assistance. Filing this with the !analyze SDK is also acceptable.
+
+@_progress
+
+(click anywhere to dismiss — this isn't a real crash)
+</pre>
+</div>
+
+<style>
+    .xp-bsod {
+        position: fixed; inset: 0;
+        background: #0a2266;
+        color: #e6e6e6;
+        z-index: 99999;
+        font-family: "Lucida Console", "Courier New", monospace;
+        font-size: 16px;
+        padding: 60px 80px;
+        cursor: pointer;
+        overflow: auto;
+    }
+    .xp-bsod-text { white-space: pre-wrap; line-height: 1.5; margin: 0; }
+</style>
+
+@code {
+    [Parameter] public EventCallback OnDismiss { get; set; }
+    private string _engineerName = "Justin Ridings";
+    private string _progress = "";
+    private System.Threading.Timer? _timer;
+    private int _step = 0;
+
+    protected override void OnInitialized()
+    {
+        _timer = new System.Threading.Timer(_ =>
+        {
+            _step += 5;
+            _progress = $"Beginning dump of physical memory ... {Math.Min(_step, 100)}% complete";
+            if (_step >= 100)
+            {
+                _timer?.Dispose();
+                _ = InvokeAsync(async () =>
+                {
+                    await Task.Delay(800);
+                    await OnDismiss.InvokeAsync();
+                });
+            }
+            InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromMilliseconds(150), TimeSpan.FromMilliseconds(150));
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}

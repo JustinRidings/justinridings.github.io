@@ -1,0 +1,366 @@
+@page "/pe-inspector"
+@using PersonalSite.Data.Models
+@using PersonalSite.Services
+
+<PageTitle>PE Inspector</PageTitle>
+
+<MudStack Spacing="4">
+    <MudPaper Class="pa-5" Elevation="3">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h4">
+                <MudIcon Icon="@Icons.Material.Filled.Memory" Class="mr-2" />
+                PE File Inspector
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Drop a Windows PE binary (<code>.exe</code>, <code>.dll</code>, <code>.sys</code>, <code>.ocx</code>, <code>.cpl</code>...).
+                Parsing runs entirely in your browser via .NET WebAssembly &mdash; nothing is uploaded.
+            </MudText>
+        </MudStack>
+    </MudPaper>
+
+    <MudPaper Class="pa-5" Elevation="2">
+        <MudFileUpload T="IBrowserFile" FilesChanged="OnFileChanged" MaximumFileCount="1" Accept=".exe,.dll,.sys,.ocx,.cpl,.scr,.drv,.efi,.mui">
+            <ActivatorContent>
+                <MudButton HtmlTag="label"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.UploadFile"
+                           Size="Size.Large">
+                    Choose a PE file
+                </MudButton>
+            </ActivatorContent>
+        </MudFileUpload>
+        @if (!string.IsNullOrEmpty(_status))
+        {
+            <MudText Typo="Typo.body2" Class="mt-3">@_status</MudText>
+        }
+    </MudPaper>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+    }
+
+    @if (_analysis is { } a)
+    {
+        if (!a.IsValid)
+        {
+            <MudAlert Severity="Severity.Error">@a.Error</MudAlert>
+        }
+        else
+        {
+            <MudPaper Class="pa-5" Elevation="2">
+                <MudStack Spacing="3">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+                        <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Large" />
+                        <MudText Typo="Typo.h5">@a.FileName</MudText>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default">@FormatBytes(a.FileSize)</MudChip>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info">@a.Summary.Architecture</MudChip>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info">@a.Summary.Bits</MudChip>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary">@a.Summary.Type</MudChip>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary">@a.Summary.Subsystem</MudChip>
+                        @if (a.Summary.IsManaged)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Tertiary">.NET</MudChip>
+                        }
+                        @if (a.Summary.IsSigned)
+                        {
+                            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Verified" Color="Color.Success">Signed</MudChip>
+                        }
+                    </MudStack>
+
+                    <MudDivider />
+
+                    <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                        <MudText Typo="Typo.subtitle2">Mitigations:</MudText>
+                        @MitigationChip("ASLR", a.Summary.HasAslr)
+                        @MitigationChip("DEP/NX", a.Summary.HasDep)
+                        @MitigationChip("CFG", a.Summary.HasCfg)
+                        @MitigationChip("High-Entropy VA", a.Summary.IsHighEntropyVa)
+                        @MitigationChip("TS Aware", a.Summary.IsTerminalServerAware)
+                    </MudStack>
+
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Linker timestamp:
+                        @if (a.Coff.TimeDateStamp == DateTime.MinValue || a.Coff.TimeDateStamp.Year < 1995)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning">Reproducible build / no real timestamp</MudChip>
+                        }
+                        else
+                        {
+                            @a.Coff.TimeDateStamp.ToString("u")
+                        }
+                    </MudText>
+                </MudStack>
+            </MudPaper>
+
+            <MudTabs Outlined="true" Position="Position.Top" Rounded="true" PanelClass="pa-4">
+                <MudTabPanel Text="Headers" Icon="@Icons.Material.Filled.Article">
+                    @HeadersPanel(a)
+                </MudTabPanel>
+                <MudTabPanel Text="@($"Sections ({a.Sections.Count})")" Icon="@Icons.Material.Filled.ViewModule">
+                    @SectionsPanel(a)
+                </MudTabPanel>
+                <MudTabPanel Text="@($"Imports ({a.Imports.Count})")" Icon="@Icons.Material.Filled.CallReceived">
+                    @ImportsPanel(a)
+                </MudTabPanel>
+                <MudTabPanel Text="@($"Exports ({a.Exports.Count})")" Icon="@Icons.Material.Filled.CallMade">
+                    @ExportsPanel(a)
+                </MudTabPanel>
+                <MudTabPanel Text="Data Directories" Icon="@Icons.Material.Filled.Storage">
+                    @DataDirsPanel(a)
+                </MudTabPanel>
+                @if (a.Clr is not null)
+                {
+                    <MudTabPanel Text=".NET CLR" Icon="@Icons.Material.Filled.Hub">
+                        @ClrPanel(a.Clr)
+                    </MudTabPanel>
+                }
+            </MudTabs>
+        }
+    }
+</MudStack>
+
+@code {
+    private const long MaxFileBytes = 50L * 1024 * 1024;
+
+    private PEAnalysis? _analysis;
+    private bool _loading;
+    private string? _status;
+
+    private async Task OnFileChanged(IBrowserFile? file)
+    {
+        if (file is null) return;
+        _status = null;
+        _analysis = null;
+
+        if (file.Size > MaxFileBytes)
+        {
+            _status = $"File too large ({FormatBytes(file.Size)}). Limit is {FormatBytes(MaxFileBytes)}.";
+            return;
+        }
+
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            byte[] bytes;
+            await using (var stream = file.OpenReadStream(MaxFileBytes))
+            await using (var ms = new MemoryStream((int)file.Size))
+            {
+                await stream.CopyToAsync(ms);
+                bytes = ms.ToArray();
+            }
+            _analysis = PEAnalyzer.Analyze(file.Name, bytes);
+            _status = $"Parsed {file.Name} ({FormatBytes(bytes.LongLength)})";
+        }
+        catch (Exception ex)
+        {
+            _status = $"Read error: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private RenderFragment MitigationChip(string label, bool enabled) => __builder =>
+    {
+        <MudChip T="string"
+                 Size="Size.Small"
+                 Icon="@(enabled ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
+                 Color="@(enabled ? Color.Success : Color.Default)"
+                 Variant="@(enabled ? Variant.Filled : Variant.Outlined)">@label</MudChip>
+    };
+
+    private RenderFragment HeadersPanel(PEAnalysis a) => __builder =>
+    {
+        <MudStack Spacing="3">
+            <KeyValueGrid Title="DOS Header" Items="@(new (string, string)[] {
+                ("Magic", a.Dos.Magic),
+                ("e_lfanew (NT headers offset)", $"0x{a.Dos.LfaNew:X}")
+            })" />
+
+            <KeyValueGrid Title="COFF / File Header" Items="@(new (string, string)[] {
+                ("Machine", a.Coff.Machine),
+                ("Number of Sections", a.Coff.NumberOfSections.ToString()),
+                ("TimeDateStamp", a.Coff.TimeDateStamp.ToString("u")),
+                ("Pointer To Symbol Table", $"0x{a.Coff.PointerToSymbolTable:X}"),
+                ("Number of Symbols", a.Coff.NumberOfSymbols.ToString()),
+                ("Size of Optional Header", a.Coff.SizeOfOptionalHeader.ToString()),
+                ("Characteristics", a.Coff.Characteristics)
+            })" />
+
+            @if (a.Optional is { } o)
+            {
+                <KeyValueGrid Title="Optional Header" Items="@(new (string, string)[] {
+                    ("Magic", o.Magic),
+                    ("Image Base", o.ImageBase),
+                    ("Size of Image", FormatBytes(o.SizeOfImage)),
+                    ("Size of Headers", FormatBytes(o.SizeOfHeaders)),
+                    ("Entry Point RVA", $"0x{o.AddressOfEntryPoint:X}"),
+                    ("Subsystem", $"{o.Subsystem} ({o.SubsystemMajor}.{o.SubsystemMinor})"),
+                    ("DLL Characteristics", o.DllCharacteristics),
+                    ("Section Alignment", $"0x{o.SectionAlignment:X}"),
+                    ("File Alignment", $"0x{o.FileAlignment:X}"),
+                    ("Checksum", $"0x{o.CheckSum:X}")
+                })" />
+            }
+        </MudStack>
+    };
+
+    private RenderFragment SectionsPanel(PEAnalysis a) => __builder =>
+    {
+        <MudTable Items="a.Sections" Dense="true" Hover="true" Striped="true">
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+                <MudTh>Virtual Addr</MudTh>
+                <MudTh>Virtual Size</MudTh>
+                <MudTh>Raw Size</MudTh>
+                <MudTh>Raw Pointer</MudTh>
+                <MudTh>Characteristics</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd><code>@context.Name</code></MudTd>
+                <MudTd><code>0x@context.VirtualAddress.ToString("X")</code></MudTd>
+                <MudTd>@FormatBytes(context.VirtualSize)</MudTd>
+                <MudTd>@FormatBytes(context.RawSize)</MudTd>
+                <MudTd><code>0x@context.RawPointer.ToString("X")</code></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.Characteristics</MudText></MudTd>
+            </RowTemplate>
+        </MudTable>
+    };
+
+    private RenderFragment ImportsPanel(PEAnalysis a) => __builder =>
+    {
+        if (a.Imports.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info">No imports.</MudAlert>
+            return;
+        }
+        <MudExpansionPanels MultiExpansion="true">
+            @foreach (var dll in a.Imports)
+            {
+                <MudExpansionPanel>
+                    <TitleContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@Icons.Material.Filled.Extension" />
+                            <MudText Typo="Typo.subtitle1"><code>@dll.Name</code></MudText>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default">@dll.Functions.Count</MudChip>
+                        </MudStack>
+                    </TitleContent>
+                    <ChildContent>
+                        <MudList T="string" Dense="true">
+                            @foreach (var fn in dll.Functions)
+                            {
+                                <MudListItem T="string" Icon="@Icons.Material.Filled.ArrowRight">
+                                    <code>@fn.Name</code>
+                                    @if (fn.IsByOrdinal)
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Class="ml-2">ordinal</MudChip>
+                                    }
+                                </MudListItem>
+                            }
+                        </MudList>
+                    </ChildContent>
+                </MudExpansionPanel>
+            }
+        </MudExpansionPanels>
+    };
+
+    private RenderFragment ExportsPanel(PEAnalysis a) => __builder =>
+    {
+        if (a.Exports.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info">No exports.</MudAlert>
+            return;
+        }
+        <MudTable Items="a.Exports" Dense="true" Hover="true" Striped="true" Filter="ExportFilter">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_exportFilter" Placeholder="Filter exports..."
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                              IconSize="Size.Small" Class="mt-0" />
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Ordinal</MudTh>
+                <MudTh>Name</MudTh>
+                <MudTh>RVA</MudTh>
+                <MudTh>Forwarder</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Ordinal</MudTd>
+                <MudTd><code>@context.Name</code></MudTd>
+                <MudTd><code>0x@context.RVA.ToString("X")</code></MudTd>
+                <MudTd>
+                    @if (!string.IsNullOrEmpty(context.ForwarderName))
+                    {
+                        <code>@context.ForwarderName</code>
+                    }
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    };
+
+    private RenderFragment DataDirsPanel(PEAnalysis a) => __builder =>
+    {
+        <MudTable Items="a.DataDirectories" Dense="true" Hover="true" Striped="true">
+            <HeaderContent>
+                <MudTh>Directory</MudTh>
+                <MudTh>RVA</MudTh>
+                <MudTh>Size</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Name</MudTd>
+                <MudTd>
+                    @if (context.Size > 0)
+                    {
+                        <code>0x@context.RVA.ToString("X")</code>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">—</MudText>
+                    }
+                </MudTd>
+                <MudTd>
+                    @if (context.Size > 0)
+                    {
+                        @FormatBytes(context.Size)
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">—</MudText>
+                    }
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    };
+
+    private RenderFragment ClrPanel(ClrHeaderInfo c) => __builder =>
+    {
+        <KeyValueGrid Title="CLR Header" Items="@(new (string, string)[] {
+            ("Runtime Version", $"{c.MajorRuntimeVersion}.{c.MinorRuntimeVersion}"),
+            ("Metadata RVA", $"0x{c.MetadataRVA:X}"),
+            ("Metadata Size", FormatBytes(c.MetadataSize)),
+            ("Flags", c.Flags),
+            ("Entry Point Token / RVA", $"0x{c.EntryPointToken:X}")
+        })" />
+    };
+
+    private string _exportFilter = string.Empty;
+    private bool ExportFilter(ExportedSymbol s) =>
+        string.IsNullOrEmpty(_exportFilter)
+        || s.Name.Contains(_exportFilter, StringComparison.OrdinalIgnoreCase);
+
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:N1} KB";
+        if (bytes < 1024L * 1024 * 1024) return $"{bytes / (1024.0 * 1024):N1} MB";
+        return $"{bytes / (1024.0 * 1024 * 1024):N1} GB";
+    }
+}

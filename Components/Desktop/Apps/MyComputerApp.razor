@@ -1,0 +1,49 @@
+@* My Computer — folder view of "drives" representing project areas. *@
+@using PersonalSite.Services
+@inject WindowManager Manager
+
+<div class="xp-explorer">
+    <div class="xp-explorer-toolbar">
+        <span>📁 My Computer</span>
+    </div>
+    <div class="xp-explorer-body">
+        <div class="xp-explorer-section-title">Hard Disk Drives</div>
+        <div class="xp-explorer-grid">
+            <button class="xp-explorer-item" @ondblclick="@(() => Open("projects"))">
+                <div class="xp-explorer-icon">💾</div>
+                <div class="xp-explorer-label">Projects (C:)</div>
+            </button>
+            <button class="xp-explorer-item" @ondblclick="@(() => Open("resume"))">
+                <div class="xp-explorer-icon">💾</div>
+                <div class="xp-explorer-label">Resume (D:)</div>
+            </button>
+            <button class="xp-explorer-item" @ondblclick="@(() => Open("about"))">
+                <div class="xp-explorer-icon">💾</div>
+                <div class="xp-explorer-label">About (E:)</div>
+            </button>
+        </div>
+        <div class="xp-explorer-section-title">Devices with Removable Storage</div>
+        <div class="xp-explorer-grid">
+            <button class="xp-explorer-item" @ondblclick="@(() => Open("cmd"))">
+                <div class="xp-explorer-icon">💿</div>
+                <div class="xp-explorer-label">cmd.exe (Z:)</div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .xp-explorer { font-family: Tahoma, sans-serif; font-size: 11px; height: 100%; display: flex; flex-direction: column; }
+    .xp-explorer-toolbar { background: #ece9d8; padding: 4px 8px; border-bottom: 1px solid #aca899; }
+    .xp-explorer-body { flex: 1; overflow: auto; padding: 8px; background: white; }
+    .xp-explorer-section-title { font-weight: bold; color: #316ac5; margin: 8px 0 4px; padding-bottom: 2px; border-bottom: 1px solid #d4d0c8; }
+    .xp-explorer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; padding: 8px; }
+    .xp-explorer-item { background: none; border: 1px solid transparent; padding: 4px; cursor: default; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .xp-explorer-item:hover { background: #d8e4f8; border-color: #316ac5; }
+    .xp-explorer-icon { font-size: 32px; }
+    .xp-explorer-label { font-size: 11px; }
+</style>
+
+@code {
+    private void Open(string key) => Manager.Open(key);
+}
