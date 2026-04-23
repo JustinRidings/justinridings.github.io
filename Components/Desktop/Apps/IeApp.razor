@@ -1,59 +1,209 @@
-@* Internet Explorer 6 — address bar with bookmarks that open real URLs in new tab. *@
+@* Internet Explorer 6 — actual iframe browser with back/forward/refresh history.
+   Many sites (Google, GitHub, etc.) refuse to be embedded via X-Frame-Options or CSP;
+   when that happens we show a friendly fallback with an "Open in real tab" link. *@
+
+@using Microsoft.AspNetCore.Components.Web
 
 <div class="xp-ie">
+    <div class="xp-ie-menubar">
+        <span>File</span><span>Edit</span><span>View</span>
+        <span>Favorites</span><span>Tools</span><span>Help</span>
+    </div>
     <div class="xp-ie-toolbar">
-        <span class="xp-ie-icon">🌐</span>
-        <span>Internet Explorer</span>
+        <button @onclick="GoBack"    disabled="@(!CanBack)"    title="Back">◀ Back</button>
+        <button @onclick="GoForward" disabled="@(!CanForward)" title="Forward">Forward ▶</button>
+        <button @onclick="Refresh"   title="Refresh">↻ Refresh</button>
+        <button @onclick="GoHome"    title="Home">🏠 Home</button>
     </div>
     <div class="xp-ie-addressbar">
-        <span>Address</span>
-        <input value="@_address" @oninput="(e) => _address = e.Value?.ToString() ?? string.Empty" @onkeydown="OnKey" />
-        <button @onclick="Go">Go</button>
+        <span class="xp-ie-addr-label">Address</span>
+        <input class="xp-ie-addr-input"
+               value="@_inputUrl"
+               @oninput="(e) => _inputUrl = e.Value?.ToString() ?? string.Empty"
+               @onkeydown="OnKey" />
+        <button class="xp-ie-go-btn" @onclick="Navigate">➜ Go</button>
     </div>
-    <div class="xp-ie-body">
-        <h2>Welcome to the Internet (1999)</h2>
-        <p>This browser doesn't actually browse. But these bookmarks open in your real browser:</p>
-        <ul>
-            <li>🐙 <a href="https://github.com/JustinRidings" target="_blank" rel="noopener">GitHub — JustinRidings</a></li>
-            <li>💼 <a href="https://www.linkedin.com/in/justinblakeridings/" target="_blank" rel="noopener">LinkedIn</a></li>
-            <li>📦 <a href="https://www.nuget.org/profiles/JustinRidings" target="_blank" rel="noopener">NuGet — JustinRidings</a></li>
-            <li>📦 <a href="https://www.nuget.org/profiles/BangAnalyze" target="_blank" rel="noopener">NuGet — BangAnalyze</a></li>
-            <li>💬 <a href="https://discordapp.com/users/448647845520867347" target="_blank" rel="noopener">Discord</a></li>
-            <li>🎬 <a href="https://www.youtube.com/watch?v=J7mCQC4e3eA" target="_blank" rel="noopener">YouTube</a></li>
-            <li>🛠 <a href="https://github.com/microsoft/SymProxyCloud" target="_blank" rel="noopener">SymProxyCloud</a></li>
-        </ul>
-        @if (!string.IsNullOrEmpty(_msg))
+    <div class="xp-ie-favorites">
+        <span class="xp-ie-fav-label">Links</span>
+        @foreach (var f in Favorites)
         {
-            <p style="color: #b00;"><b>@_msg</b></p>
+            <button class="xp-ie-fav" @onclick="@(() => NavigateTo(f.Url))" title="@f.Url">@f.Label</button>
         }
     </div>
+
+    <div class="xp-ie-body">
+        @if (string.IsNullOrEmpty(_currentUrl))
+        {
+            <div class="xp-ie-blank">Enter an address above or click a Link.</div>
+        }
+        else if (IsKnownBlocked(_currentUrl))
+        {
+            <div class="xp-ie-blocked">
+                <div class="xp-ie-blocked-icon">🚫</div>
+                <h2>This site refuses to be embedded.</h2>
+                <p>
+                    <b>@HostOf(_currentUrl)</b> sends an <code>X-Frame-Options</code> /
+                    <code>Content-Security-Policy: frame-ancestors</code> header that tells your browser
+                    to refuse loading it inside another page. Google, GitHub, YouTube, Reddit, Facebook,
+                    most banks &mdash; all do this for clickjacking protection. There is nothing this
+                    fake browser (or any iframe-based browser) can do about it.
+                </p>
+                <p><a href="@_currentUrl" target="_blank" rel="noopener" class="xp-ie-open-real">▶ Open @_currentUrl in a real browser tab</a></p>
+                <p style="font-size:11px; color:#666;">
+                    Try one of the Links above &mdash; those sites <i>do</i> allow embedding.
+                </p>
+            </div>
+        }
+        else
+        {
+            <iframe class="xp-ie-frame"
+                    src="@_currentUrl"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+                    referrerpolicy="no-referrer"></iframe>
+            <div class="xp-ie-fallback">
+                <span>Page blank? The site likely refuses to be embedded.</span>
+                <a href="@_currentUrl" target="_blank" rel="noopener">Open in new tab ↗</a>
+            </div>
+        }
+    </div>
+
     <div class="xp-ie-statusbar">
-        <span>🔒 Internet | Estimated remaining: 30 minutes (56k modem)</span>
+        <span>🔒 Internet | @_currentUrl</span>
     </div>
 </div>
 
 <style>
-    .xp-ie { background: #ece9d8; height: 100%; display: flex; flex-direction: column; font-family: Tahoma, sans-serif; font-size: 11px; }
-    .xp-ie-toolbar { background: linear-gradient(to bottom, #245edb, #1a3fa3); color: white; padding: 4px 8px; }
-    .xp-ie-addressbar { display: flex; align-items: center; gap: 4px; padding: 4px; background: #ece9d8; border-bottom: 1px solid #aca899; }
-    .xp-ie-addressbar input { flex: 1; padding: 2px 6px; border: 1px solid #7f9db9; }
-    .xp-ie-body { flex: 1; padding: 12px 16px; background: white; overflow: auto; font-size: 13px; font-family: "Times New Roman", serif; }
-    .xp-ie-body h2 { color: #00006c; font-size: 18px; }
-    .xp-ie-body a { color: #00006c; text-decoration: underline; }
-    .xp-ie-statusbar { background: #ece9d8; border-top: 1px solid #aca899; padding: 2px 6px; font-size: 11px; color: #444; }
+    .xp-ie { background: #ece9d8; height: 100%; display: flex; flex-direction: column; font-family: Tahoma, sans-serif; font-size: 11px; color: #000; }
+    .xp-ie-menubar { background: #ece9d8; padding: 2px 6px; border-bottom: 1px solid #aca899; display: flex; gap: 12px; }
+    .xp-ie-menubar span { cursor: default; }
+    .xp-ie-toolbar { background: #ece9d8; padding: 4px 6px; border-bottom: 1px solid #aca899; display: flex; gap: 4px; }
+    .xp-ie-toolbar button { font-size: 11px; padding: 2px 8px; cursor: pointer; }
+    .xp-ie-toolbar button:disabled { color: #999; cursor: default; }
+    .xp-ie-addressbar { display: flex; align-items: center; gap: 4px; padding: 4px 6px; background: #ece9d8; border-bottom: 1px solid #aca899; }
+    .xp-ie-addr-label { color: #444; }
+    .xp-ie-addr-input { flex: 1; padding: 3px 6px; border: 1px solid #7f9db9; font-family: Tahoma, sans-serif; font-size: 12px; }
+    .xp-ie-go-btn { padding: 2px 10px; cursor: pointer; }
+    .xp-ie-favorites { display: flex; align-items: center; gap: 4px; padding: 3px 6px; background: #ece9d8; border-bottom: 1px solid #aca899; flex-wrap: wrap; }
+    .xp-ie-fav-label { color: #444; padding-right: 4px; border-right: 1px solid #aca899; margin-right: 4px; }
+    .xp-ie-fav { background: none; border: 1px solid transparent; padding: 1px 6px; cursor: pointer; font-size: 11px; color: #00006c; }
+    .xp-ie-fav:hover { border: 1px solid #7f9db9; background: #f5f5f5; }
+    .xp-ie-body { flex: 1; min-height: 0; position: relative; background: white; display: flex; flex-direction: column; }
+    .xp-ie-frame { flex: 1; width: 100%; border: 0; background: white; }
+    .xp-ie-fallback { background: #fffce0; border-top: 1px solid #eed; color: #555; padding: 4px 10px; font-size: 11px; display: flex; justify-content: space-between; gap: 12px; }
+    .xp-ie-fallback a { color: #00006c; }
+    .xp-ie-blank { padding: 20px; color: #888; }
+    .xp-ie-blocked { padding: 30px 40px; max-width: 640px; color: #222; font-family: Tahoma, sans-serif; font-size: 13px; line-height: 1.5; }
+    .xp-ie-blocked-icon { font-size: 48px; margin-bottom: 8px; }
+    .xp-ie-blocked h2 { color: #c00; font-size: 20px; margin: 0 0 12px; }
+    .xp-ie-blocked code { background: #f0f0f0; padding: 1px 4px; border: 1px solid #ddd; font-size: 11px; }
+    .xp-ie-open-real { display: inline-block; background: #ffe; border: 1px solid #cc9; padding: 8px 14px; color: #003; text-decoration: none; font-weight: bold; margin: 8px 0; }
+    .xp-ie-open-real:hover { background: #ffd; }
+    .xp-ie-statusbar { background: #ece9d8; border-top: 1px solid #aca899; padding: 2px 6px; font-size: 11px; color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 
 @code {
-    private string _address = "http://www.google.com";
-    private string _msg = "";
+    private const string Home = "https://en.wikipedia.org/wiki/Windows_XP";
+    private string _inputUrl = Home;
+    private string _currentUrl = Home;
 
-    private void Go()
+    private readonly List<string> _history = new() { Home };
+    private int _historyIndex = 0;
+
+    private bool CanBack => _historyIndex > 0;
+    private bool CanForward => _historyIndex < _history.Count - 1;
+
+    private record Favorite(string Label, string Url);
+
+    private static readonly Favorite[] Favorites = new[]
     {
-        _msg = "Page cannot be displayed. (We don't actually browse.) Try a bookmark below.";
+        new Favorite("Wikipedia: Win XP", "https://en.wikipedia.org/wiki/Windows_XP"),
+        new Favorite("Internet Archive", "https://archive.org"),
+        new Favorite("MDN", "https://developer.mozilla.org/"),
+        new Favorite(".NET docs", "https://learn.microsoft.com/en-us/dotnet/"),
+        new Favorite("HTTP Cats", "https://http.cat/"),
+        new Favorite("GitHub: me", "https://github.com/JustinRidings"),
+    };
+
+    private void Navigate()
+    {
+        if (string.IsNullOrWhiteSpace(_inputUrl)) return;
+        var url = _inputUrl.Trim();
+        if (!url.Contains("://")) url = "https://" + url;
+        NavigateTo(url);
     }
+
+    private void NavigateTo(string url)
+    {
+        if (_historyIndex < _history.Count - 1)
+        {
+            _history.RemoveRange(_historyIndex + 1, _history.Count - _historyIndex - 1);
+        }
+        _history.Add(url);
+        _historyIndex = _history.Count - 1;
+        _currentUrl = url;
+        _inputUrl = url;
+    }
+
+    private void GoBack()
+    {
+        if (!CanBack) return;
+        _historyIndex--;
+        _currentUrl = _history[_historyIndex];
+        _inputUrl = _currentUrl;
+    }
+
+    private void GoForward()
+    {
+        if (!CanForward) return;
+        _historyIndex++;
+        _currentUrl = _history[_historyIndex];
+        _inputUrl = _currentUrl;
+    }
+
+    private void Refresh()
+    {
+        var u = _currentUrl;
+        _currentUrl = "";
+        StateHasChanged();
+        _currentUrl = u;
+    }
+
+    private void GoHome() => NavigateTo(Home);
 
     private void OnKey(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter") Go();
+        if (e.Key == "Enter") Navigate();
+    }
+
+    // Sites known to send X-Frame-Options or frame-ancestors that block embedding.
+    // We short-circuit to a friendly explanation page rather than show an empty iframe.
+    private static readonly string[] BlockedHosts = new[]
+    {
+        "google.com", "www.google.com",
+        "github.com", "www.github.com",
+        "youtube.com", "www.youtube.com", "m.youtube.com",
+        "facebook.com", "www.facebook.com", "m.facebook.com",
+        "twitter.com", "x.com", "www.x.com",
+        "reddit.com", "www.reddit.com", "old.reddit.com",
+        "instagram.com", "www.instagram.com",
+        "linkedin.com", "www.linkedin.com",
+        "amazon.com", "www.amazon.com",
+        "microsoft.com", "www.microsoft.com",
+        "stackoverflow.com", "www.stackoverflow.com",
+        "discord.com", "discordapp.com",
+        "netflix.com", "www.netflix.com",
+        "twitch.tv", "www.twitch.tv",
+    };
+
+    private static bool IsKnownBlocked(string url)
+    {
+        try { return BlockedHosts.Contains(new Uri(url).Host, StringComparer.OrdinalIgnoreCase); }
+        catch { return false; }
+    }
+
+    private static string HostOf(string url)
+    {
+        try { return new Uri(url).Host; }
+        catch { return url; }
     }
 }

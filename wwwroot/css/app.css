@@ -55,18 +55,16 @@ code {
     to { opacity: 1; }
 }
 
-/* Desktop icons grid */
+/* Desktop icons — children are absolutely positioned by the runtime, draggable. */
 .xp-desktop-icons {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    display: grid;
-    grid-template-columns: 84px;
-    grid-auto-rows: 92px;
-    gap: 4px;
+    inset: 0;
+    pointer-events: none; /* container is just a coordinate space; icons re-enable */
 }
 
 .xp-desktop-icon {
+    position: absolute;
+    pointer-events: auto;
     width: 84px;
     height: 92px;
     display: flex;
@@ -78,6 +76,7 @@ code {
     border-radius: 2px;
     text-align: center;
     outline: none;
+    box-sizing: border-box;
 }
 
 .xp-desktop-icon:hover .xp-desktop-icon-image {
@@ -106,22 +105,7 @@ code {
 
 /* Sticky note — bottom-right desktop joke */
 .xp-desktop-stickynote {
-    position: absolute;
-    top: 60px;
-    right: 24px;
-    width: 180px;
-    background: #fff8a0;
-    color: #333;
-    padding: 10px 12px 12px;
-    transform: rotate(2deg);
-    box-shadow: 2px 4px 8px rgba(0,0,0,0.3);
-    font-family: "Comic Sans MS", "Segoe Print", cursive;
-    font-size: 13px;
-}
-
-.xp-desktop-stickynote ul {
-    margin: 4px 0 0;
-    padding-left: 20px;
+    display: none;
 }
 
 /* ===== Window chrome ===== */
@@ -146,6 +130,7 @@ code {
     padding: 0;
     display: flex;
     flex-direction: column;
+    color: #000;
 }
 
 .xp-window-body > * {

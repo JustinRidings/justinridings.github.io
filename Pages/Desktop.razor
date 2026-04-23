@@ -38,21 +38,16 @@ else
         <div class="xp-desktop-icons">
             @foreach (var def in _icons)
             {
+                var pos = GetIconPos(def.Key);
                 <DesktopIcon Label="@def.Title"
                              Icon="@def.IconHtml"
+                             X="pos.X"
+                             Y="pos.Y"
                              Selected="@(_selectedIcon == def.Key)"
                              OnSelect="() => _selectedIcon = def.Key"
-                             OnOpen="() => OpenApp(def.Key)" />
+                             OnOpen="() => OpenIfNotDragged(def.Key)"
+                             OnStartDrag="@((e) => StartIconDrag(def.Key, e))" />
             }
-        </div>
-
-        <div class="xp-desktop-stickynote">
-            <b>📝 TODO</b>
-            <ul>
-                <li>fix bug from 2019</li>
-                <li>reply to recruiter</li>
-                <li>maybe sleep</li>
-            </ul>
         </div>
 
         @* Window host *@
@@ -111,8 +106,21 @@ else
 
     private string? _draggingId;
     private string? _resizingId;
+    private string? _draggingIconKey;
+    private double _iconDragOffX, _iconDragOffY;
+    private double _iconDragStartX, _iconDragStartY;
+    private bool _iconDidMove;
     private double _dragOffX, _dragOffY;
     private double _resizeStartX, _resizeStartY, _resizeStartW, _resizeStartH;
+
+    private const int IconColW = 84;
+    private const int IconRowH = 92;
+    private const int IconStartX = 12;
+    private const int IconStartY = 12;
+    private const string IconPosStorageKey = "xp.icon-positions";
+
+    // key -> (X, Y) on the desktop in pixels
+    private Dictionary<string, (double X, double Y)> _iconPositions = new();
 
     private readonly List<int> _konami = new();
     private static readonly string[] KonamiSeq =
@@ -124,7 +132,7 @@ else
     // The icons displayed on the desktop, in order.
     private List<AppDefinition> _icons => new[]
     {
-        "my-computer", "about", "pe-inspector", "pong", "projects", "resume", "ie", "msn", "recycle-bin", "cmd"
+        "my-computer", "about", "pe-inspector", "pong", "doom", "projects", "ie", "msn", "recycle-bin", "cmd"
     }.Select(k => Manager.Registry[k]).ToList();
 
     protected override async Task OnInitializedAsync()
@@ -135,10 +143,10 @@ else
             Manager.Register(new("about",        "About Me",            "📄", typeof(AboutApp),        540, 480));
             Manager.Register(new("my-computer",  "My Computer",         "💻", typeof(MyComputerApp),   560, 420));
             Manager.Register(new("projects",     "Projects",            "📁", typeof(ProjectsApp),     560, 420));
-            Manager.Register(new("resume",       "Resume.doc",          "📝", typeof(ResumeApp),       760, 560));
             Manager.Register(new("pong",         "Pong.exe",            "🏓", typeof(PongApp),         900, 700));
+            Manager.Register(new("doom",         "DOOM.exe",            "👹", typeof(DoomApp),         800, 620));
             Manager.Register(new("pe-inspector", "PE Inspector.exe",    "🔬", typeof(PEInspectorApp),  900, 640));
-            Manager.Register(new("ie",           "Internet Explorer",   "🌐", typeof(IeApp),           640, 480));
+            Manager.Register(new("ie",           "Internet Explorer",   "🌐", typeof(IeApp),           820, 600));
             Manager.Register(new("msn",          "MSN Messenger",       "💬", typeof(MsnApp),          400, 520));
             Manager.Register(new("recycle-bin",  "Recycle Bin",         "🗑️", typeof(RecycleBinApp),   620, 420));
             Manager.Register(new("cmd",          "Command Prompt",      "⌨️", typeof(CmdApp),          640, 400));
@@ -166,7 +174,49 @@ else
             _fadeIn = true;
         }
 
+        // Restore icon positions from localStorage (persists across reloads)
+        await LoadIconPositionsAsync();
+
         _focusOnNextRender = true;
+    }
+
+    private (double X, double Y) GetIconPos(string key)
+    {
+        if (_iconPositions.TryGetValue(key, out var p)) return p;
+        // Default: vertical column, in the order they appear in _icons
+        var idx = _icons.FindIndex(d => d.Key == key);
+        if (idx < 0) idx = 0;
+        var def = (X: (double)IconStartX, Y: (double)(IconStartY + idx * IconRowH));
+        _iconPositions[key] = def;
+        return def;
+    }
+
+    private async Task LoadIconPositionsAsync()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", IconPosStorageKey);
+            if (string.IsNullOrWhiteSpace(json)) return;
+            var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, double[]>>(json);
+            if (dict is null) return;
+            foreach (var kv in dict)
+            {
+                if (kv.Value is { Length: 2 })
+                    _iconPositions[kv.Key] = (kv.Value[0], kv.Value[1]);
+            }
+        }
+        catch { /* ignore */ }
+    }
+
+    private async Task SaveIconPositionsAsync()
+    {
+        try
+        {
+            var dict = _iconPositions.ToDictionary(kv => kv.Key, kv => new[] { kv.Value.X, kv.Value.Y });
+            var json = System.Text.Json.JsonSerializer.Serialize(dict);
+            await JS.InvokeVoidAsync("localStorage.setItem", IconPosStorageKey, json);
+        }
+        catch { /* ignore */ }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -199,6 +249,24 @@ else
     {
         Manager.Open(key);
         _ = Sound.ClickAsync();
+    }
+
+    private void OpenIfNotDragged(string key)
+    {
+        // Don't fire the dblclick "open" if the user actually dragged the icon
+        if (_iconDidMove) return;
+        OpenApp(key);
+    }
+
+    private void StartIconDrag(string key, MouseEventArgs e)
+    {
+        var pos = GetIconPos(key);
+        _draggingIconKey = key;
+        _iconDragOffX = e.ClientX - pos.X;
+        _iconDragOffY = e.ClientY - pos.Y;
+        _iconDragStartX = pos.X;
+        _iconDragStartY = pos.Y;
+        _iconDidMove = false;
     }
 
     private void OnDesktopMouseDown()
@@ -299,12 +367,28 @@ else
                 _resizeStartW + (e.ClientX - _resizeStartX),
                 _resizeStartH + (e.ClientY - _resizeStartY));
         }
+        else if (_draggingIconKey is not null)
+        {
+            var newX = e.ClientX - _iconDragOffX;
+            var newY = e.ClientY - _iconDragOffY;
+            // Clamp to viewport (leave room for taskbar at bottom)
+            if (newX < 0) newX = 0;
+            if (newY < 0) newY = 0;
+            _iconPositions[_draggingIconKey] = (newX, newY);
+            if (Math.Abs(newX - _iconDragStartX) > 3 || Math.Abs(newY - _iconDragStartY) > 3)
+                _iconDidMove = true;
+        }
     }
 
     private void OnGlobalUp()
     {
         _draggingId = null;
         _resizingId = null;
+        if (_draggingIconKey is not null)
+        {
+            _draggingIconKey = null;
+            _ = SaveIconPositionsAsync();
+        }
     }
 
     private void ShowToast(string msg)
