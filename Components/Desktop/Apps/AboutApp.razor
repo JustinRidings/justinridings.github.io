@@ -1,0 +1,62 @@
+@* Notepad-style "About Me" app. *@
+<div class="xp-notepad">
+<pre class="xp-notepad-content">
+================================================================
+                   ABOUT ME — Justin Ridings
+================================================================
+
+Engineer at Microsoft. US Army Veteran. Microsoft MSSA Graduate.
+
+I work on Windows. Specifically, I make sure that when your machine
+falls over you eventually get a fix from the team that owns the
+component that fell over.
+
+Things I've helped ship / build:
+
+  > CTRL+SHIFT+WIN+B  — the black-screen recovery key combination
+                        that resets your graphics stack on Windows.
+
+  > !analyze SDK      — published on NuGet under @@BangAnalyze.
+                        Tools for the WinDbg automation crowd.
+
+  > SymProxyCloud     — open source on github.com/microsoft.
+                        A modern, scalable Microsoft Symbol Server
+                        proxy.
+
+  > This site         — Blazor WebAssembly + .NET 10 + MudBlazor +
+                        an unhealthy amount of fake XP CSS.
+
+----------------------------------------------------------------
+
+Click around. Most things work. Some things don't. That's
+realistic for a Windows install.
+
+Try opening:
+  - PE Inspector.exe   (drop a .dll, parse it in your browser)
+  - Pong.exe           (yes, really)
+  - Internet Explorer  (don't worry, it opens in Edge)
+  - Recycle Bin        (find out what got cut)
+
+Press Ctrl+Alt+Del for a faithful tribute.
+
+----------------------------------------------------------------
+                                                File 1 of 1
+</pre>
+</div>
+
+<style>
+    .xp-notepad {
+        font-family: "Lucida Console", "Courier New", monospace;
+        background: white;
+        color: black;
+        height: 100%;
+        overflow: auto;
+        padding: 8px;
+    }
+    .xp-notepad-content {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.5;
+        white-space: pre;
+    }
+</style>

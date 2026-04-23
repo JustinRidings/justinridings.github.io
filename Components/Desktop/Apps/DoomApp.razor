@@ -1,0 +1,59 @@
+@* DOOM — embeds the Internet Archive's preserved Doom shareware (1993, id Software).
+   The Archive serves the original WAD via emularity/em-dosbox in an iframe.
+   We don't ship any copyrighted assets — this is just a frame around their player. *@
+
+<div class="xp-doom">
+    <div class="xp-doom-banner">
+        <span>👹 DOOM (Shareware Episode 1: Knee-Deep in the Dead) — id Software, 1993</span>
+        <span class="xp-doom-hint">Click the game, then arrow keys to move, Ctrl to fire, Space to use.</span>
+    </div>
+    <div class="xp-doom-frame-wrap">
+        @if (_loaded)
+        {
+            <iframe class="xp-doom-iframe"
+                    src="https://archive.org/embed/DoomsharewareEpisode"
+                    allow="autoplay; fullscreen"
+                    allowfullscreen></iframe>
+        }
+        else
+        {
+            <div class="xp-doom-launch">
+                <div class="xp-doom-art">
+                    👹 💀 👹<br />
+                    <span style="font-size: 28px;">D O O M</span>
+                </div>
+                <p>This loads the original 1993 shareware Doom from the Internet Archive (~6 MB).</p>
+                <p style="font-size: 11px; color: #888;">First load can take a few seconds. Audio may require a click.</p>
+                <button class="xp-doom-launch-btn" @onclick="() => _loaded = true">▶ Launch DOOM</button>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .xp-doom { display: flex; flex-direction: column; height: 100%; background: #000; }
+    .xp-doom-banner {
+        background: #800000;
+        color: #ffd; padding: 4px 8px; font-family: Tahoma, sans-serif; font-size: 11px;
+        display: flex; justify-content: space-between; gap: 12px;
+    }
+    .xp-doom-hint { opacity: 0.85; }
+    .xp-doom-frame-wrap { flex: 1; position: relative; min-height: 0; }
+    .xp-doom-iframe { width: 100%; height: 100%; border: 0; display: block; background: #000; }
+    .xp-doom-launch {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+        color: #ffcccc; font-family: Tahoma, sans-serif; text-align: center; padding: 16px;
+    }
+    .xp-doom-art { font-size: 38px; line-height: 1.2; color: #ff5252; text-shadow: 0 0 10px #800; }
+    .xp-doom-launch-btn {
+        background: #800; color: #fff; border: 2px outset #c00; padding: 10px 24px;
+        font-size: 16px; font-weight: bold; cursor: pointer; font-family: Tahoma, sans-serif;
+    }
+    .xp-doom-launch-btn:hover { background: #a00; }
+    .xp-doom-launch-btn:active { border-style: inset; }
+</style>
+
+@code {
+    private bool _loaded;
+}

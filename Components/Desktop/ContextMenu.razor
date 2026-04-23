@@ -1,0 +1,17 @@
+@* Right-click context menu on the desktop. *@
+<div class="xp-context-menu" style="left:@(X)px; top:@(Y)px;" @onclick:stopPropagation="true">
+    <div class="xp-context-item disabled">View &nbsp;▶</div>
+    <div class="xp-context-item disabled">Arrange Icons By &nbsp;▶</div>
+    <div class="xp-context-item" @onclick="OnRefresh">Refresh</div>
+    <div class="xp-context-divider"></div>
+    <div class="xp-context-item" @onclick="OnNewShortcut">New &nbsp;▶</div>
+    <div class="xp-context-divider"></div>
+    <div class="xp-context-item disabled">Properties</div>
+</div>
+
+@code {
+    [Parameter] public double X { get; set; }
+    [Parameter] public double Y { get; set; }
+    [Parameter] public EventCallback OnNewShortcut { get; set; }
+    [Parameter] public EventCallback OnRefresh { get; set; }
+}

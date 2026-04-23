@@ -1,0 +1,105 @@
+@* BIOS POST + XP boot splash sequence. *@
+@implements IDisposable
+
+@if (Stage == BootStage.Bios)
+{
+    <div class="xp-bios" @onclick="Skip" tabindex="0" @onkeydown="OnKey" @ref="_root">
+<pre>
+PhoenixBIOS 4.0 Release 6.0     Copyright 1985-2001 Phoenix Technologies Ltd.
+All Rights Reserved
+
+CPU = Intel(R) Pentium(R) 4 @@ 2.80 GHz
+640K System RAM Passed
+1023M Extended RAM Passed
+512K Cache SRAM Passed
+System BIOS shadowed
+Video BIOS shadowed
+Fixed Disk 0:  ST380011A-(PM)
+ATAPI CD-ROM:  TSSTcorp CD/DVDW
+
+Mouse initialized
+Press &lt;F2&gt; to enter SETUP, &lt;F12&gt; for Network Boot, &lt;ESC&gt; for Boot Menu
+
+Loading Windows XP Portfolio Edition ...
+</pre>
+        <div class="xp-bios-skip">click anywhere to skip</div>
+    </div>
+}
+else if (Stage == BootStage.XpSplash)
+{
+    <div class="xp-splash" @onclick="Skip" tabindex="0" @onkeydown="OnKey" @ref="_root">
+        <div class="xp-splash-logo">
+            <div class="xp-splash-windows">Microsoft<br/><b>Windows</b><sup>XP</sup></div>
+            <div class="xp-splash-edition">Portfolio Edition</div>
+            <div class="xp-splash-bar"><div class="xp-splash-bar-inner"></div></div>
+            <div class="xp-splash-copyright">Copyright © Justin Ridings · click to skip</div>
+        </div>
+    </div>
+}
+
+<style>
+    .xp-bios { position: fixed; inset: 0; background: black; color: #c0c0c0; font-family: "Lucida Console", monospace; font-size: 14px; padding: 24px; z-index: 100000; cursor: pointer; outline: none; }
+    .xp-bios pre { margin: 0; }
+    .xp-bios-skip { position: absolute; bottom: 12px; right: 16px; font-size: 11px; color: #777; }
+
+    .xp-splash { position: fixed; inset: 0; background: black; display: flex; align-items: center; justify-content: center; z-index: 100000; cursor: pointer; outline: none; color: white; font-family: Tahoma, sans-serif; }
+    .xp-splash-logo { text-align: center; }
+    .xp-splash-windows { font-size: 32px; line-height: 1.2; }
+    .xp-splash-windows b { color: #ffcc00; font-size: 48px; }
+    .xp-splash-edition { font-size: 18px; margin-top: 8px; color: #ddd; }
+    .xp-splash-bar { width: 240px; height: 14px; border: 1px solid #333; background: #000; margin: 36px auto 8px; padding: 1px; border-radius: 2px; overflow: hidden; }
+    .xp-splash-bar-inner { width: 36px; height: 100%; background: linear-gradient(to right, #002244, #4488ff, #002244); animation: xp-splash-slide 1.4s linear infinite; }
+    @@keyframes xp-splash-slide { from { transform: translateX(-36px); } to { transform: translateX(240px); } }
+    .xp-splash-copyright { font-size: 11px; color: #888; margin-top: 16px; }
+</style>
+
+@code {
+    public enum BootStage { Bios, XpSplash, Done }
+
+    [Parameter] public EventCallback OnComplete { get; set; }
+
+    public BootStage Stage { get; private set; } = BootStage.Bios;
+    private System.Threading.Timer? _timer;
+    private ElementReference _root;
+    private bool _focusOnNextRender = true;
+
+    protected override void OnInitialized()
+    {
+        Schedule(2200, async () =>
+        {
+            Stage = BootStage.XpSplash;
+            _focusOnNextRender = true;
+            await InvokeAsync(StateHasChanged);
+            Schedule(2800, async () => await Complete());
+        });
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusOnNextRender)
+        {
+            _focusOnNextRender = false;
+            try { await _root.FocusAsync(); } catch { }
+        }
+    }
+
+    private void Schedule(int ms, Func<Task> next)
+    {
+        _timer?.Dispose();
+        _timer = new System.Threading.Timer(_ => _ = next(), null, ms, Timeout.Infinite);
+    }
+
+    private async Task Skip() => await Complete();
+    private async Task OnKey(KeyboardEventArgs e) => await Complete();
+
+    private async Task Complete()
+    {
+        if (Stage == BootStage.Done) return;
+        Stage = BootStage.Done;
+        _timer?.Dispose();
+        await InvokeAsync(StateHasChanged);
+        await OnComplete.InvokeAsync();
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}

@@ -1,0 +1,11 @@
+@inherits LayoutComponentBase
+
+@* Bare layout used by the XP desktop. No MudBlazor chrome.
+   MudBlazor providers still need to live in the tree for any MudBlazor
+   components used inside hosted apps (Pong, PE Inspector). *@
+<MudThemeProvider IsDarkMode="false" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+@Body

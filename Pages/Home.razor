@@ -1,40 +1,39 @@
-﻿@page "/"
+@page "/about-classic"
 
 <PageTitle>Home</PageTitle>
-<FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center" Style="height:fit-content; padding-top:5%">
-    <FluentSpacer />
-    <FluentCard>
-        <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
-            <FluentCard MinimalStyle=true Style="max-width:50%">
-                <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center" VerticalAlignment="VerticalAlignment.Center">
-                    <div style="padding-right:10px;">
-                        <a href="@githubProfile">
-                            <img role="button" src="@githubProfilePic" class="face-large" href="@githubProfile" title="@githubProfile" />
-                        </a>
-                    </div>
-                    <FluentSpacer />
-                    <FluentLabel Typo="Typography.PaneHeader"><u>About Me</u></FluentLabel>
-                    <FluentSpacer />
-                    <FluentLabel Typo="Typography.Body">
-                        I'm a US Army Veteran, a Microsoft MSSA Graduate, and an Engineer at Microsoft. I've worked on
-                        things like helping to implement the <code>CTRL+SHIFT+WIN+B</code> black screen recovery key 
-                        combination in Windows, publishing the <a href="https://www.nuget.org/profiles/BangAnalyze">
-                        !analyze Debugging SDK</a>, creating <a href="https://github.com/microsoft/SymProxyCloud">
-                        SymProxyCloud</a>, and - more than likely - getting the crashes that you hit in Windows fixed
-                        by the teams that own the components.
-                    </FluentLabel>
-                </FluentStack>
-            </FluentCard>
-            <FluentSpacer />
-            <img src="https://ghchart.rshah.org/JustinRidings" style="max-width:100%" alt="Github Contribution Calendar" />
-        </FluentStack>
-    </FluentCard>
-    <FluentSpacer />
-</FluentStack>
+
+<MudStack AlignItems="AlignItems.Center" Spacing="4">
+    <MudPaper Class="pa-6" Elevation="3" Style="max-width: 720px; width: 100%;">
+        <MudStack AlignItems="AlignItems.Center" Spacing="3">
+            <MudLink Href="@githubProfile" Target="_blank">
+                <MudAvatar Style="height: 132px; width: 132px; border: 1px solid silver;">
+                    <MudImage Src="@githubProfilePic" Alt="GitHub avatar" />
+                </MudAvatar>
+            </MudLink>
+
+            <MudText Typo="Typo.h5"><u>About Me</u></MudText>
+
+            <MudText Typo="Typo.body1" Align="Align.Center">
+                I'm a US Army Veteran, a Microsoft MSSA Graduate, and an Engineer at Microsoft.
+                I've worked on things like helping to implement the
+                <code>CTRL+SHIFT+WIN+B</code> black screen recovery key combination in Windows,
+                publishing the <MudLink Href="https://www.nuget.org/profiles/BangAnalyze" Target="_blank">!analyze Debugging SDK</MudLink>,
+                creating <MudLink Href="https://github.com/microsoft/SymProxyCloud" Target="_blank">SymProxyCloud</MudLink>,
+                and &mdash; more than likely &mdash; getting the crashes that you hit in Windows fixed
+                by the teams that own the components.
+            </MudText>
+        </MudStack>
+    </MudPaper>
+
+    <MudPaper Class="pa-4" Elevation="2" Style="max-width: 100%; overflow-x: auto;">
+        <img src="https://ghchart.rshah.org/JustinRidings"
+             alt="GitHub contribution calendar"
+             style="max-width: 100%; display: block;" />
+    </MudPaper>
+</MudStack>
 
 @code
 {
-    readonly string githubProfile = @"http://github.com/JustinRidings";
-    readonly string githubProfilePic = @"https://avatars.githubusercontent.com/u/49916830";
-    readonly string youtubeLink = @"https://www.youtube-nocookie.com/embed/J7mCQC4e3eA?si=T-tjmpBm1zEI9ih0";
+    readonly string githubProfile = "http://github.com/JustinRidings";
+    readonly string githubProfilePic = "https://avatars.githubusercontent.com/u/49916830";
 }

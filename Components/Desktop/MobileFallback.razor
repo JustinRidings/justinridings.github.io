@@ -1,0 +1,42 @@
+@* Stacked-cards fallback for narrow viewports. *@
+<div class="xp-mobile">
+    <div class="xp-mobile-header">
+        <h1>Justin Ridings</h1>
+        <div>Engineer at Microsoft · Windows debugging</div>
+    </div>
+
+    <div class="xp-mobile-card">
+        <h2>About</h2>
+        <p>
+            US Army Veteran · Microsoft MSSA Graduate · Engineer at Microsoft.
+            I work on the debugging and crash-analysis pipeline for Windows.
+            Helped ship CTRL+SHIFT+WIN+B, the !analyze SDK, and SymProxyCloud.
+        </p>
+    </div>
+
+    <div class="xp-mobile-card">
+        <h2>Links</h2>
+        <ul>
+            <li><a href="https://github.com/JustinRidings" target="_blank" rel="noopener">GitHub</a></li>
+            <li><a href="https://www.linkedin.com/in/justinblakeridings/" target="_blank" rel="noopener">LinkedIn</a></li>
+            <li><a href="https://www.nuget.org/profiles/JustinRidings" target="_blank" rel="noopener">NuGet</a></li>
+            <li><a href="https://github.com/microsoft/SymProxyCloud" target="_blank" rel="noopener">SymProxyCloud</a></li>
+        </ul>
+    </div>
+
+    <div class="xp-mobile-card">
+        <h2>Try the desktop version</h2>
+        <p>This portfolio has a Windows XP desktop. It's best on a larger screen.</p>
+        <a class="xp-mobile-button" href="?force_desktop=1">Use desktop mode anyway →</a>
+        <a class="xp-mobile-button" href="/about-classic">Open the classic page →</a>
+    </div>
+</div>
+
+<style>
+    .xp-mobile { font-family: "Segoe UI", Tahoma, sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; color: #222; }
+    .xp-mobile-header { background: linear-gradient(to bottom, #245edb, #1a3fa3); color: white; padding: 16px; border-radius: 8px; margin-bottom: 12px; }
+    .xp-mobile-header h1 { margin: 0 0 4px; }
+    .xp-mobile-card { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .xp-mobile-card h2 { margin: 0 0 8px; color: #245edb; font-size: 18px; }
+    .xp-mobile-button { display: inline-block; margin: 8px 8px 0 0; background: #245edb; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-size: 14px; }
+</style>

@@ -1,0 +1,25 @@
+@* Konami snow effect — fixed-position falling characters. *@
+
+<div class="xp-snow">
+    @for (int i = 0; i < 80; i++)
+    {
+        var left = (i * 37 % 100);
+        var delay = (i * 13 % 60) / 10.0;
+        var dur = 6 + (i * 7 % 70) / 10.0;
+        var size = 12 + (i * 5 % 16);
+        <span class="xp-snow-flake"
+              style="left:@(left)%; font-size:@(size)px; animation-delay:@(delay)s; animation-duration:@(dur)s;">
+            ❄
+        </span>
+    }
+</div>
+
+<style>
+    .xp-snow { position: fixed; inset: 0; pointer-events: none; z-index: 5000; overflow: hidden; }
+    .xp-snow-flake { position: absolute; top: -10vh; color: rgba(255,255,255,0.85); animation-name: xp-snow-fall; animation-iteration-count: infinite; animation-timing-function: linear; }
+    @@keyframes xp-snow-fall {
+        0% { transform: translateY(0) rotate(0); opacity: 0; }
+        10% { opacity: 1; }
+        100% { transform: translateY(110vh) rotate(360deg); opacity: 0.8; }
+    }
+</style>

@@ -1,0 +1,29 @@
+@* System tray with clock, volume, network. Click hidden icon for BSOD. *@
+@implements IDisposable
+
+<div class="xp-systemtray">
+    <span class="xp-tray-icon" title="Volume">🔊</span>
+    <span class="xp-tray-icon" title="Network">📶</span>
+    <span class="xp-tray-icon xp-tray-icon-secret" title="Don't click this" @onclick="OnBsodClick">⚠️</span>
+    <span class="xp-tray-clock">@Now.ToString("h:mm tt")</span>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnBsodRequested { get; set; }
+
+    private DateTime Now = DateTime.Now;
+    private System.Threading.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new System.Threading.Timer(_ =>
+        {
+            Now = DateTime.Now;
+            InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+    }
+
+    private void OnBsodClick() => OnBsodRequested.InvokeAsync();
+
+    public void Dispose() => _timer?.Dispose();
+}

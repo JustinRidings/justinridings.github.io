@@ -1,0 +1,121 @@
+@* MSN Messenger 7-style fake chat. *@
+@implements IDisposable
+
+<div class="xp-msn">
+    <div class="xp-msn-header">
+        <span>💬 Chat with Justin Ridings</span>
+        <span class="xp-msn-status">🟢 Online</span>
+    </div>
+
+    <div class="xp-msn-buddies">
+        <div class="xp-msn-buddy">🟢 Justin Ridings <small>(you're talking to me)</small></div>
+        <div class="xp-msn-buddy">🟢 Mark Russinovich</div>
+        <div class="xp-msn-buddy">⚪ Bill Gates <small>(idle since 2008)</small></div>
+        <div class="xp-msn-buddy">⚪ Steve Ballmer <small>(idle, screaming)</small></div>
+        <div class="xp-msn-buddy">🔴 Clippy <small>(retired)</small></div>
+    </div>
+
+    <div class="xp-msn-log" @ref="_logRef">
+        @foreach (var m in _messages)
+        {
+            <div class="xp-msn-msg @(m.IsMe ? "me" : "them")">
+                <b>@(m.IsMe ? "You" : "Justin"):</b> @m.Text
+            </div>
+        }
+        @if (_clippyShown)
+        {
+            <div class="xp-msn-clippy">
+                <div class="xp-msn-clippy-balloon">
+                    📎 It looks like you're trying to evaluate a candidate.<br/>
+                    Would you like help?<br/>
+                    <button class="xp-link" @onclick="DismissClippy">No, thanks</button>
+                </div>
+                <div class="xp-msn-clippy-icon">📎</div>
+            </div>
+        }
+    </div>
+
+    <div class="xp-msn-input">
+        <input @bind="_draft" @bind:event="oninput" @onkeydown="OnKey" placeholder="Type a message..." />
+        <button @onclick="Send">Send</button>
+    </div>
+</div>
+
+<style>
+    .xp-msn { background: #ece9d8; height: 100%; display: flex; flex-direction: column; font-family: Tahoma, sans-serif; font-size: 12px; }
+    .xp-msn-header { background: linear-gradient(to bottom, #245edb, #1a3fa3); color: white; padding: 4px 8px; display: flex; justify-content: space-between; }
+    .xp-msn-status { font-size: 11px; }
+    .xp-msn-buddies { background: white; border-bottom: 1px solid #aca899; padding: 4px 8px; max-height: 100px; overflow: auto; }
+    .xp-msn-buddy { padding: 2px 0; font-size: 11px; }
+    .xp-msn-buddy small { color: #777; margin-left: 6px; }
+    .xp-msn-log { flex: 1; background: white; padding: 8px; overflow: auto; position: relative; }
+    .xp-msn-msg { margin-bottom: 4px; }
+    .xp-msn-msg.me b { color: #c70000; }
+    .xp-msn-msg.them b { color: #0a4faa; }
+    .xp-msn-input { display: flex; gap: 4px; padding: 6px; background: #ece9d8; border-top: 1px solid #aca899; }
+    .xp-msn-input input { flex: 1; padding: 4px; border: 1px solid #7f9db9; }
+    .xp-msn-clippy { position: absolute; bottom: 8px; right: 8px; display: flex; gap: 8px; align-items: flex-end; pointer-events: auto; }
+    .xp-msn-clippy-balloon { background: #ffffd0; border: 1px solid #aaaa55; border-radius: 8px; padding: 8px 12px; font-size: 12px; max-width: 240px; box-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+    .xp-msn-clippy-icon { font-size: 38px; }
+    .xp-link { background: none; border: none; color: blue; text-decoration: underline; cursor: pointer; padding: 0; font-size: 11px; }
+</style>
+
+@code {
+    private record Msg(bool IsMe, string Text);
+
+    private readonly List<Msg> _messages = new()
+    {
+        new(false, "hey 👋 thanks for stopping by"),
+        new(false, "this is a fake chat — but if you want to actually talk, hit me on LinkedIn or GitHub. Both linked in IE.")
+    };
+
+    private string _draft = "";
+    private bool _clippyShown;
+    private System.Threading.Timer? _clippyTimer;
+    private ElementReference _logRef;
+
+    protected override void OnInitialized()
+    {
+        _clippyTimer = new System.Threading.Timer(_ =>
+        {
+            _clippyShown = true;
+            InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromSeconds(20), Timeout.InfiniteTimeSpan);
+    }
+
+    private void DismissClippy() => _clippyShown = false;
+
+    private void Send()
+    {
+        var t = _draft?.Trim();
+        if (string.IsNullOrEmpty(t)) return;
+        _messages.Add(new(true, t!));
+        _draft = "";
+        // Scripted reply
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(700);
+            _messages.Add(new(false, ScriptReply(t!)));
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private void OnKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") Send();
+    }
+
+    private static string ScriptReply(string input)
+    {
+        var lower = input.ToLowerInvariant();
+        if (lower.Contains("hire")) return "I'm flattered. Best route: LinkedIn DM.";
+        if (lower.Contains("hello") || lower.Contains("hi") || lower.Contains("hey")) return "hi! 👋";
+        if (lower.Contains("windbg") || lower.Contains("debug")) return "now you're speaking my language. open PE Inspector.exe.";
+        if (lower.Contains("crash") || lower.Contains("bsod")) return "press Ctrl+Alt+Del 😉";
+        if (lower.Contains("microsoft")) return "yep, that's where I work.";
+        if (lower.Contains("blazor")) return "this whole desktop is a Blazor WASM app. wild, right?";
+        return "haha, this is a portfolio — for a real conversation, ping me on LinkedIn (in IE).";
+    }
+
+    public void Dispose() => _clippyTimer?.Dispose();
+}

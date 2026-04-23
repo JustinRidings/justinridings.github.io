@@ -1,0 +1,410 @@
+@page "/"
+@layout EmptyLayout
+@using PersonalSite.Components.Desktop
+@using PersonalSite.Components.Desktop.Apps
+@using PersonalSite.Services
+@inject WindowManager Manager
+@inject BootService Boot
+@inject SoundService Sound
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<PageTitle>Justin Ridings</PageTitle>
+
+@if (_isMobile && !_forceDesktop)
+{
+    <MobileFallback />
+}
+else if (_stage == Stage.Booting)
+{
+    <BootScreen OnComplete="OnBootComplete" />
+}
+else if (_stage == Stage.Login)
+{
+    <LoginScreen OnLogin="OnLogin" />
+}
+else
+{
+    <div class="xp-desktop @(_fadeIn ? "fade-in" : "")"
+         @onmousedown="OnDesktopMouseDown"
+         @oncontextmenu="OnDesktopRightClick"
+         @oncontextmenu:preventDefault="true"
+         @onmousemove="OnGlobalMove"
+         @onmouseup="OnGlobalUp"
+         @onkeydown="OnDesktopKey"
+         tabindex="0"
+         @ref="_rootRef">
+
+        <div class="xp-desktop-icons">
+            @foreach (var def in _icons)
+            {
+                var pos = GetIconPos(def.Key);
+                <DesktopIcon Label="@def.Title"
+                             Icon="@def.IconHtml"
+                             X="pos.X"
+                             Y="pos.Y"
+                             Selected="@(_selectedIcon == def.Key)"
+                             OnSelect="() => _selectedIcon = def.Key"
+                             OnOpen="() => OpenIfNotDragged(def.Key)"
+                             OnStartDrag="@((e) => StartIconDrag(def.Key, e))" />
+            }
+        </div>
+
+        @* Window host *@
+        @foreach (var w in Manager.Windows)
+        {
+            @if (!w.IsMinimized)
+            {
+                <Window Win="w"
+                        Manager="Manager"
+                        Focused="@(w.Id == Manager.FocusedId)"
+                        OnStartDrag="StartDrag"
+                        OnStartResize="StartResize" />
+            }
+        }
+
+        @if (_contextMenuOpen)
+        {
+            <ContextMenu X="_contextX" Y="_contextY"
+                         OnRefresh="OnRefresh"
+                         OnNewShortcut="OnNewShortcutJoke" />
+        }
+
+        @if (_snowOn)
+        {
+            <SnowEffect />
+        }
+
+        @if (_bsodOn)
+        {
+            <BsodScreen OnDismiss="DismissBsod" />
+        }
+
+        <Taskbar Manager="Manager" OnBsodRequested="ShowBsod" />
+
+        @if (!string.IsNullOrEmpty(_toast))
+        {
+            <div class="xp-toast" @onclick="() => _toast = string.Empty">@_toast</div>
+        }
+    </div>
+}
+
+@code {
+    enum Stage { Booting, Login, Desktop }
+
+    private Stage _stage = Stage.Booting;
+    private bool _isMobile;
+    private bool _forceDesktop;
+    private bool _fadeIn;
+    private string? _selectedIcon;
+    private bool _contextMenuOpen;
+    private double _contextX, _contextY;
+    private bool _snowOn;
+    private bool _bsodOn;
+    private string _toast = "";
+    private System.Threading.Timer? _toastTimer;
+
+    private string? _draggingId;
+    private string? _resizingId;
+    private string? _draggingIconKey;
+    private double _iconDragOffX, _iconDragOffY;
+    private double _iconDragStartX, _iconDragStartY;
+    private bool _iconDidMove;
+    private double _dragOffX, _dragOffY;
+    private double _resizeStartX, _resizeStartY, _resizeStartW, _resizeStartH;
+
+    private const int IconColW = 84;
+    private const int IconRowH = 92;
+    private const int IconStartX = 12;
+    private const int IconStartY = 12;
+    private const string IconPosStorageKey = "xp.icon-positions";
+
+    // key -> (X, Y) on the desktop in pixels
+    private Dictionary<string, (double X, double Y)> _iconPositions = new();
+
+    private readonly List<int> _konami = new();
+    private static readonly string[] KonamiSeq =
+        { "ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a" };
+
+    private ElementReference _rootRef;
+    private bool _focusOnNextRender;
+
+    // The icons displayed on the desktop, in order.
+    private List<AppDefinition> _icons => new[]
+    {
+        "my-computer", "about", "pe-inspector", "pong", "doom", "projects", "ie", "msn", "recycle-bin", "cmd"
+    }.Select(k => Manager.Registry[k]).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Register apps once.
+        if (Manager.Registry.Count == 0)
+        {
+            Manager.Register(new("about",        "About Me",            "📄", typeof(AboutApp),        540, 480));
+            Manager.Register(new("my-computer",  "My Computer",         "💻", typeof(MyComputerApp),   560, 420));
+            Manager.Register(new("projects",     "Projects",            "📁", typeof(ProjectsApp),     560, 420));
+            Manager.Register(new("pong",         "Pong.exe",            "🏓", typeof(PongApp),         900, 700));
+            Manager.Register(new("doom",         "DOOM.exe",            "👹", typeof(DoomApp),         800, 620));
+            Manager.Register(new("pe-inspector", "PE Inspector.exe",    "🔬", typeof(PEInspectorApp),  900, 640));
+            Manager.Register(new("ie",           "Internet Explorer",   "🌐", typeof(IeApp),           820, 600));
+            Manager.Register(new("msn",          "MSN Messenger",       "💬", typeof(MsnApp),          400, 520));
+            Manager.Register(new("recycle-bin",  "Recycle Bin",         "🗑️", typeof(RecycleBinApp),   620, 420));
+            Manager.Register(new("cmd",          "Command Prompt",      "⌨️", typeof(CmdApp),          640, 400));
+        }
+
+        // Mobile detection: ?force_desktop=1 always shows the desktop
+        try
+        {
+            var width = await JS.InvokeAsync<int>("eval", "window.innerWidth");
+            _isMobile = width < 768;
+        }
+        catch { _isMobile = false; }
+
+        try
+        {
+            var qs = await JS.InvokeAsync<string>("eval", "window.location.search || ''");
+            _forceDesktop = qs.Contains("force_desktop=1");
+        }
+        catch { }
+
+        // Skip boot if we've already done it this session
+        if (await Boot.HasBootedThisSessionAsync())
+        {
+            _stage = Stage.Desktop;
+            _fadeIn = true;
+        }
+
+        // Restore icon positions from localStorage (persists across reloads)
+        await LoadIconPositionsAsync();
+
+        _focusOnNextRender = true;
+    }
+
+    private (double X, double Y) GetIconPos(string key)
+    {
+        if (_iconPositions.TryGetValue(key, out var p)) return p;
+        // Default: vertical column, in the order they appear in _icons
+        var idx = _icons.FindIndex(d => d.Key == key);
+        if (idx < 0) idx = 0;
+        var def = (X: (double)IconStartX, Y: (double)(IconStartY + idx * IconRowH));
+        _iconPositions[key] = def;
+        return def;
+    }
+
+    private async Task LoadIconPositionsAsync()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", IconPosStorageKey);
+            if (string.IsNullOrWhiteSpace(json)) return;
+            var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, double[]>>(json);
+            if (dict is null) return;
+            foreach (var kv in dict)
+            {
+                if (kv.Value is { Length: 2 })
+                    _iconPositions[kv.Key] = (kv.Value[0], kv.Value[1]);
+            }
+        }
+        catch { /* ignore */ }
+    }
+
+    private async Task SaveIconPositionsAsync()
+    {
+        try
+        {
+            var dict = _iconPositions.ToDictionary(kv => kv.Key, kv => new[] { kv.Value.X, kv.Value.Y });
+            var json = System.Text.Json.JsonSerializer.Serialize(dict);
+            await JS.InvokeVoidAsync("localStorage.setItem", IconPosStorageKey, json);
+        }
+        catch { /* ignore */ }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focusOnNextRender)
+        {
+            _focusOnNextRender = false;
+            try { await _rootRef.FocusAsync(); } catch { }
+        }
+    }
+
+    private async Task OnBootComplete()
+    {
+        _stage = Stage.Login;
+        _focusOnNextRender = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnLogin()
+    {
+        _stage = Stage.Desktop;
+        _fadeIn = true;
+        await Boot.MarkBootedAsync();
+        _ = Sound.StartupAsync();
+        _focusOnNextRender = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void OpenApp(string key)
+    {
+        Manager.Open(key);
+        _ = Sound.ClickAsync();
+    }
+
+    private void OpenIfNotDragged(string key)
+    {
+        // Don't fire the dblclick "open" if the user actually dragged the icon
+        if (_iconDidMove) return;
+        OpenApp(key);
+    }
+
+    private void StartIconDrag(string key, MouseEventArgs e)
+    {
+        var pos = GetIconPos(key);
+        _draggingIconKey = key;
+        _iconDragOffX = e.ClientX - pos.X;
+        _iconDragOffY = e.ClientY - pos.Y;
+        _iconDragStartX = pos.X;
+        _iconDragStartY = pos.Y;
+        _iconDidMove = false;
+    }
+
+    private void OnDesktopMouseDown()
+    {
+        _selectedIcon = null;
+        _contextMenuOpen = false;
+    }
+
+    private void OnDesktopRightClick(MouseEventArgs e)
+    {
+        _contextX = e.ClientX;
+        _contextY = e.ClientY;
+        _contextMenuOpen = true;
+    }
+
+    private void OnRefresh()
+    {
+        _contextMenuOpen = false;
+        ShowToast("Refreshed.");
+    }
+
+    private void OnNewShortcutJoke()
+    {
+        _contextMenuOpen = false;
+        ShowToast("You can't make new things on a fake desktop. Sorry!");
+    }
+
+    private void OnDesktopKey(KeyboardEventArgs e)
+    {
+        // BSOD via Ctrl+Alt+Del
+        if (e.CtrlKey && e.AltKey && (e.Key == "Delete" || e.Key == "Del"))
+        {
+            ShowBsod();
+            return;
+        }
+
+        // Konami code
+        var key = e.Key;
+        var expected = KonamiSeq[_konami.Count];
+        if (string.Equals(key, expected, StringComparison.OrdinalIgnoreCase))
+        {
+            _konami.Add(0);
+            if (_konami.Count == KonamiSeq.Length)
+            {
+                _konami.Clear();
+                _snowOn = !_snowOn;
+                ShowToast(_snowOn ? "❄ Konami activated. ❄" : "Snow off.");
+            }
+        }
+        else
+        {
+            _konami.Clear();
+        }
+    }
+
+    private void ShowBsod()
+    {
+        _bsodOn = true;
+        _ = Sound.ErrorAsync();
+    }
+
+    private void DismissBsod() => _bsodOn = false;
+
+    private void StartDrag(string id)
+    {
+        var w = Manager.Windows.FirstOrDefault(w => w.Id == id);
+        if (w is null) return;
+        _draggingId = id;
+        _dragOffX = _lastMouseX - w.X;
+        _dragOffY = _lastMouseY - w.Y;
+    }
+
+    private void StartResize(string id)
+    {
+        var w = Manager.Windows.FirstOrDefault(w => w.Id == id);
+        if (w is null) return;
+        _resizingId = id;
+        _resizeStartX = _lastMouseX;
+        _resizeStartY = _lastMouseY;
+        _resizeStartW = w.Width;
+        _resizeStartH = w.Height;
+    }
+
+    private double _lastMouseX, _lastMouseY;
+
+    private void OnGlobalMove(MouseEventArgs e)
+    {
+        _lastMouseX = e.ClientX;
+        _lastMouseY = e.ClientY;
+
+        if (_draggingId is not null)
+        {
+            Manager.Move(_draggingId, e.ClientX - _dragOffX, e.ClientY - _dragOffY);
+        }
+        else if (_resizingId is not null)
+        {
+            Manager.Resize(_resizingId,
+                _resizeStartW + (e.ClientX - _resizeStartX),
+                _resizeStartH + (e.ClientY - _resizeStartY));
+        }
+        else if (_draggingIconKey is not null)
+        {
+            var newX = e.ClientX - _iconDragOffX;
+            var newY = e.ClientY - _iconDragOffY;
+            // Clamp to viewport (leave room for taskbar at bottom)
+            if (newX < 0) newX = 0;
+            if (newY < 0) newY = 0;
+            _iconPositions[_draggingIconKey] = (newX, newY);
+            if (Math.Abs(newX - _iconDragStartX) > 3 || Math.Abs(newY - _iconDragStartY) > 3)
+                _iconDidMove = true;
+        }
+    }
+
+    private void OnGlobalUp()
+    {
+        _draggingId = null;
+        _resizingId = null;
+        if (_draggingIconKey is not null)
+        {
+            _draggingIconKey = null;
+            _ = SaveIconPositionsAsync();
+        }
+    }
+
+    private void ShowToast(string msg)
+    {
+        _toast = msg;
+        _toastTimer?.Dispose();
+        _toastTimer = new System.Threading.Timer(_ =>
+        {
+            _toast = "";
+            InvokeAsync(StateHasChanged);
+        }, null, 2500, Timeout.Infinite);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _toastTimer?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}
